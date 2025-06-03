@@ -1,107 +1,142 @@
-# Next.js 初始化模板
+# 攀岩墙定制系统
 
-一个简洁的 Next.js 初始化模板，适合快速开始新项目或学习现代前端开发。
+一个基于 Next.js 的 B2B 攀岩墙定制系统，提供完整的产品管理、订单管理和用户管理功能。
+
+## ✨ 功能特点
+
+### 前台功能
+- 🏠 产品展示和浏览
+- 🔍 产品详情查看和规格选择
+- 🛒 购物车管理
+- 📋 订单查看和管理
+- 👤 用户注册和登录
+
+### 后台管理
+- 📊 数据统计面板
+- 📦 产品管理（Excel批量上传、编辑）
+- 👥 客户管理（查看、编辑、添加）
+- 👤 用户管理（查看、编辑、添加、角色管理）
+- 📋 订单管理（状态更新、生产管理、出货通知）
+- ⚙️ 系统设置
+
+### 技术特性
+- ✅ TypeScript 类型安全
+- ✅ 响应式设计
+- ✅ 多颜色和尺寸选择
+- ✅ Excel 文件上传处理
+- ✅ 实时价格计算
+- ✅ 运费到付模式
 
 ## 🚀 快速开始
 
-### 安装依赖
+### 环境要求
+- Node.js 18.0 或更高版本
+- npm 或 yarn
+
+### 1. 安装依赖
 ```bash
-npm i
+npm install
 ```
 
-> 强烈推荐安装 `Biome` 插件，提早规避 Bug
-> 可在 cursor 左上角的插件市场中搜索并安装
+### 2. 环境变量配置
+创建 `.env` 文件并复制 `env.example` 的内容：
 
-### 启动开发服务器
+```bash
+cp env.example .env
+```
+
+编辑 `.env` 文件配置以下变量：
+
+```bash
+# 默认用户密码配置
+DEFAULT_ADMIN_PASSWORD=admin123
+DEFAULT_CUSTOMER_PASSWORD=customer123
+
+# JWT密钥 (生产环境中使用复杂的随机字符串)
+JWT_SECRET=your-jwt-secret-key-here
+
+# 应用配置
+NEXT_PUBLIC_APP_NAME=攀岩墙定制系统
+NEXT_PUBLIC_APP_VERSION=1.0.0
+```
+
+### 3. 启动开发服务器
 ```bash
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 查看结果。
+打开 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-### 线上部署
-
-#### 使用 Vercel 一键部署
-
-Vercel 是 Next.js 官方推荐的零配置部署平台，非常适合静态和 SSR 应用。
-
-**完整步骤如下：**
-
-##### 第一步：准备 GitHub 仓库
-
-1. **注册 GitHub 账号**
-   - 前往 [https://github.com/](https://github.com/) 
-   - 点击 "Sign up" 注册新账号
-   - 填写用户名、邮箱、密码并验证
-
-2. **创建新仓库**
-   - 登录后点击右上角的 "+" 按钮
-   - 选择 "New repository"
-   - 仓库名称填写：`my-nextjs-app`（可自定义）
-   - 设置为 Public（公开）
-   - 点击 "Create repository"
-
-3. **上传项目代码**
-   ```bash
-   # 在项目根目录执行
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/你的用户名/my-nextjs-app.git
-   git push -u origin main
-   ```
-
-##### 第二步：部署到 Vercel
-
-1. **注册登录 Vercel**
-   - 前往 [https://vercel.com/](https://vercel.com/) 
-   - 点击 "Sign up" 并选择 "Continue with GitHub"
-   - 授权 Vercel 访问你的 GitHub 账号
-
-2. **导入项目**
-   - 登录后点击 "New Project"
-   - 选择刚才创建的 GitHub 仓库
-   - 点击 "Import"
-
-3. **配置部署**
-   - Framework Preset：自动检测为 "Next.js"
-   - Build Command：`npm run build`（通常自动填写）
-   - Output Directory：`.next`（通常自动填写）
-   - Install Command：`npm install`（通常自动填写）
-
-4. **开始部署**
-   - 点击 "Deploy" 按钮
-   - 等待 2-3 分钟完成构建
-   - 部署成功后会得到一个免费的 `.vercel.app` 域名
-
-##### 第三步：后续更新
-
-以后每次修改代码并推送到 GitHub，Vercel 会自动重新部署：
-
+### 4. 构建生产版本
 ```bash
-git add .
-git commit -m "更新说明"
-git push
+npm run build
+npm start
 ```
 
-#### 其他部署选项
+## 🔐 默认账户
 
-##### Netlify（备选方案）
-1. 前往 [https://netlify.com/](https://netlify.com/)
-2. 注册并连接 GitHub
-3. 选择仓库并部署
-4. 构建命令：`npm run build`
-5. 发布目录：`out`
+### 管理员账户
+- 用户名：`admin`
+- 密码：`admin123`（可通过环境变量修改）
 
-##### 本地构建测试
-```bash
-npm run build      # 构建生产版本
-npm start         # 启动生产服务器
+### 客户账户
+- 用户名：`customer1`
+- 密码：`customer123`（可通过环境变量修改）
+
+## 📁 项目结构
+
+```
+src/
+├── app/                 # Next.js 13+ App Router
+│   ├── admin/          # 管理后台页面
+│   ├── products/       # 产品相关页面
+│   ├── orders/         # 订单相关页面
+│   └── ...
+├── components/         # UI 组件
+│   ├── ui/            # shadcn/ui 组件
+│   └── Navigation.tsx  # 导航组件
+├── lib/               # 工具函数和服务
+│   ├── services/      # 数据服务
+│   └── utils/         # 工具函数
+├── store/             # Zustand 状态管理
+├── styles/            # 样式文件
+└── types/             # TypeScript 类型定义
 ```
 
-**🎉 恭喜！** 你的 Next.js 应用现在已经上线了！
+## 🔧 环境变量说明
 
+| 变量名 | 说明 | 默认值 |
+|--------|------|---------|
+| `DEFAULT_ADMIN_PASSWORD` | 默认管理员密码 | `admin123` |
+| `DEFAULT_CUSTOMER_PASSWORD` | 默认客户密码 | `customer123` |
+| `JWT_SECRET` | JWT 签名密钥 | - |
+| `NEXT_PUBLIC_APP_NAME` | 应用名称 | `攀岩墙定制系统` |
+| `NEXT_PUBLIC_APP_VERSION` | 应用版本 | `1.0.0` |
+
+## 🔒 安全注意事项
+
+1. **生产环境部署前**：
+   - 修改所有默认密码
+   - 使用复杂的 JWT 密钥
+   - 确保 `.env` 文件不被提交到版本控制
+
+2. **密码安全**：
+   - 生产环境使用强密码
+   - 定期更换密码
+   - 考虑实现密码加密存储
+
+## 🚀 部署指南
+
+### Vercel 部署
+
+1. 推送代码到 GitHub
+2. 在 Vercel 导入项目
+3. 配置环境变量
+4. 点击部署
+
+### 其他平台
+
+确保在部署平台配置所有必要的环境变量。
 
 ## 📄 许可证
 
@@ -109,4 +144,4 @@ MIT License - 可自由使用和修改。
 
 ---
 
-**开始你的 Next.js 之旅吧！** 🎉
+**开始您的攀岩墙定制业务！** 🏔️
