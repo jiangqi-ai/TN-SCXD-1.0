@@ -82,14 +82,17 @@ export default function CartPage() {
   const CartItem = ({ item }: { item: typeof items[0] }) => (
     <div className="flex gap-4 p-4 border-b">
       <div className="flex-shrink-0">
-        <img
-          src={item.image || '/placeholder-product.png'}
-          alt={item.productCode}
-          className="w-20 h-20 object-cover rounded-lg"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder-product.png';
-          }}
-        />
+        <div className="aspect-square w-16 bg-gray-100 rounded flex items-center justify-center">
+          {item.image ? (
+            <img 
+              src={item.image} 
+              alt={item.productCode}
+              className="w-full h-full object-cover rounded"
+            />
+          ) : (
+            <Package className="h-6 w-6 text-gray-400" />
+          )}
+        </div>
       </div>
 
       <div className="flex-1 min-w-0">

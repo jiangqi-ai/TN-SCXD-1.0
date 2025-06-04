@@ -153,14 +153,17 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   {order.items.map((item, index) => (
                     <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
                       <div className="flex-shrink-0">
-                        <img
-                          src={item.image || '/placeholder-product.png'}
-                          alt={item.productCode}
-                          className="w-16 h-16 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder-product.png';
-                          }}
-                        />
+                        <div className="aspect-square w-16 bg-gray-100 rounded flex items-center justify-center">
+                          {item.image ? (
+                            <img 
+                              src={item.image} 
+                              alt={item.productName}
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : (
+                            <Package className="h-6 w-6 text-gray-400" />
+                          )}
+                        </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900">{item.productCode}</h3>
