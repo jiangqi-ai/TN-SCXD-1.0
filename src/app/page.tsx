@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ShoppingCart, User, Package, FileText, ArrowLeft } from 'lucide-react'
+import { ShoppingCart, User, Package, FileText, ArrowLeft, ArrowRight, Star, CheckCircle, Users, Truck } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useCartStore } from '@/store/useCartStore'
 import { mockProductService } from '@/lib/services/mockDataService'
@@ -13,28 +13,38 @@ import { formatPrice } from '@/lib/utils/helpers'
 import type { Product } from '@/types'
 import Navigation from '@/components/Navigation'
 
+// 开发环境下导入数据测试工具
+if (process.env.NODE_ENV === 'development') {
+	import('@/lib/utils/dataTest').then((module) => {
+		if (typeof window !== 'undefined') {
+			(window as any).dataTest = module.dataTest;
+		}
+	});
+}
+
 /**
  * @description 这只是个示例页面，你可以随意修改这个页面或进行全面重构
  */
 export default function HomePage() {
 	const { user, isAuthenticated } = useAuthStore()
 	const { getTotalItems } = useCartStore()
-	const [products, setProducts] = useState<Product[]>([])
+	const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 
 	useEffect(() => {
-		const loadProducts = async () => {
+		const loadFeaturedProducts = async () => {
 			try {
-				const data = await mockProductService.getAll()
-				setProducts(data.slice(0, 4)) // 仅显示前4个产品
+				const products = await mockProductService.getAll()
+				// 取前4个产品作为特色产品
+				setFeaturedProducts(products.slice(0, 4))
 			} catch (error) {
-				console.error('Failed to load products:', error)
+				console.error('Failed to load featured products:', error)
 			} finally {
 				setIsLoading(false)
 			}
 		}
 
-		loadProducts()
+		loadFeaturedProducts()
 	}, [])
 
 	const ProductCard = ({ product }: { product: Product }) => (
@@ -158,7 +168,7 @@ export default function HomePage() {
 						</div>
 					) : (
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-							{products.map(product => (
+							{featuredProducts.map(product => (
 								<ProductCard key={product.id} product={product} />
 							))}
 						</div>

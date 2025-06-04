@@ -248,6 +248,16 @@ const storage = {
     if (typeof window === 'undefined') return;
     storage.ensureInitialized();
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  },
+
+  // 重置所有数据（调试用）
+  resetAllData: (): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    storage._initialized = false;
+    storage.ensureInitialized();
   }
 };
 
