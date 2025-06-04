@@ -45,13 +45,13 @@ export const dataTest = {
     
     console.log('激活的产品:');
     activeProducts.forEach((p: any, index: number) => {
-      console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id})`);
+      console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id}) - 创建时间: ${p.createdAt}`);
     });
     
     if (inactiveProducts.length > 0) {
       console.log('禁用的产品:');
       inactiveProducts.forEach((p: any, index: number) => {
-        console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id})`);
+        console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id}) - 创建时间: ${p.createdAt}`);
       });
     }
     
@@ -68,6 +68,8 @@ export const dataTest = {
     localStorage.removeItem('tn-scxd-orders');
     
     console.log('所有localStorage数据已清空');
+    // 触发页面刷新以重新初始化
+    window.location.reload();
   },
 
   // 检查特定产品
@@ -91,12 +93,14 @@ export const dataTest = {
     if (!products) return [];
     
     const data = JSON.parse(products);
-    const userViewProducts = data.filter((p: any) => p.isActive);
+    const userViewProducts = data
+      .filter((p: any) => p.isActive)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
     console.log('=== 普通用户视图 ===');
     console.log('用户可见产品数:', userViewProducts.length);
     userViewProducts.forEach((p: any, index: number) => {
-      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice}`);
+      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice} (${p.createdAt})`);
     });
     console.log('=== 用户视图检查完毕 ===');
     
@@ -110,17 +114,75 @@ export const dataTest = {
     const products = localStorage.getItem('tn-scxd-products');
     if (!products) return [];
     
-    const data = JSON.parse(products);
+    const data = JSON.parse(products)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
     console.log('=== 管理员视图 ===');
     console.log('管理员可见产品数:', data.length);
     data.forEach((p: any, index: number) => {
       const status = p.isActive ? '✓ 激活' : '✗ 禁用';
-      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice} [${status}]`);
+      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice} [${status}] (${p.createdAt})`);
     });
     console.log('=== 管理员视图检查完毕 ===');
     
     return data;
+  },
+
+  // 强制刷新产品数据（用于调试持久化问题）
+  forceRefreshProducts: () => {
+    if (typeof window === 'undefined') return;
+    
+    console.log('=== 强制刷新产品数据 ===');
+    
+    // 检查当前localStorage状态
+    const current = localStorage.getItem('tn-scxd-products');
+    if (current) {
+      const data = JSON.parse(current);
+      console.log('当前localStorage中的产品数:', data.length);
+      
+      // 触发页面刷新以确保数据同步
+      console.log('刷新页面以同步数据...');
+      window.location.reload();
+    } else {
+      console.log('localStorage中没有产品数据');
+    }
+  },
+
+  // 测试产品上传流程
+  testProductUpload: () => {
+    if (typeof window === 'undefined') return;
+    
+    console.log('=== 测试产品上传流程 ===');
+    
+    // 模拟一个测试产品
+    const testProduct = {
+      id: `test-${Date.now()}`,
+      productCode: `TEST-${Date.now()}`,
+      image: '',
+      availableDimensions: ['30cm x 30cm x 5cm'],
+      weight: 2.5,
+      pieceCount: 4,
+      minimumOrderQty: 10,
+      availableColors: ['红色', '蓝色'],
+      unitPrice: 45.00,
+      remarks: '测试产品',
+      features: ['测试特性'],
+      applications: '测试应用',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // 获取现有产品
+    const products = JSON.parse(localStorage.getItem('tn-scxd-products') || '[]');
+    products.unshift(testProduct);
+    localStorage.setItem('tn-scxd-products', JSON.stringify(products));
+    
+    console.log('测试产品已添加:', testProduct.productCode);
+    console.log('当前产品总数:', products.length);
+    
+    // 验证添加结果
+    dataTest.getUserViewProducts();
   }
 };
 

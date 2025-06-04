@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Upload, Download, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockProductService } from '@/lib/services/mockDataService';
-import { parseColors, validateNumber, validateProductCode } from '@/lib/utils/helpers';
+import { parseColors, validateNumber, validateProductCode, generateId } from '@/lib/utils/helpers';
 import type { Product, ExcelProductRow } from '@/types';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -106,7 +106,7 @@ export default function ProductUploadPage() {
           try {
             const availableDimensions = parseColors((row as any)['可选尺寸'] || '');
             const product: Product = {
-              id: `imported-${Date.now()}-${index}`,
+              id: generateId(),
               productCode: validateProductCode(row['产品编号'], index),
               image: row['图片'] || '',
               availableDimensions,
@@ -116,6 +116,8 @@ export default function ProductUploadPage() {
               availableColors: parseColors(row['颜色']),
               unitPrice: validateNumber(row['销售价格（不含运，不含税）'], '销售价格', index),
               remarks: row['备注'] || '',
+              features: [],
+              applications: '',
               isActive: true,
               createdAt: new Date(),
               updatedAt: new Date()

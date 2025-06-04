@@ -271,14 +271,18 @@ export const mockProductService = {
   async getAll(): Promise<Product[]> {
     await simulateDelay(500);
     const products = storage.getProducts();
-    return products.filter(p => p.isActive);
+    // 过滤激活产品并按创建时间降序排序（新产品在前）
+    return products
+      .filter(p => p.isActive)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   // 管理员专用：获取所有产品（包括禁用的）
   async getAllForAdmin(): Promise<Product[]> {
     await simulateDelay(500);
     const products = storage.getProducts();
-    return products; // 返回所有产品，不过滤isActive状态
+    // 按创建时间降序排序（新产品在前）
+    return products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   async getById(id: string): Promise<Product | null> {
@@ -325,17 +329,16 @@ export const mockProductService = {
     const index = products.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Product not found');
     
-    const product = products[index];
-    if (product) {
-      product.isActive = false;
-      storage.setProducts(products);
-    }
+    // 真正删除产品，而不是只设置isActive为false
+    products.splice(index, 1);
+    storage.setProducts(products);
   },
 
   async uploadFromExcel(newProducts: Product[]): Promise<void> {
     await simulateDelay(1000);
     const products = storage.getProducts();
-    products.push(...newProducts);
+    // 将新产品添加到数组开头，确保它们显示在前面
+    products.unshift(...newProducts);
     storage.setProducts(products);
   }
 };
