@@ -163,6 +163,31 @@ const initialUsers: User[] = [
 
 // 存储工具函数
 const storage = {
+  // 初始化标志
+  _initialized: false,
+
+  // 确保初始化
+  ensureInitialized: () => {
+    if (typeof window === 'undefined' || storage._initialized) return;
+    
+    // 如果localStorage中没有产品数据，使用初始数据
+    if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(initialProducts));
+    }
+    
+    // 如果localStorage中没有用户数据，使用初始数据
+    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
+    }
+    
+    // 如果localStorage中没有订单数据，初始化为空数组
+    if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+    }
+    
+    storage._initialized = true;
+  },
+
   // 安全的JSON解析
   safeJSONParse: <T>(str: string | null, fallback: T): T => {
     if (!str) return fallback;
@@ -183,6 +208,7 @@ const storage = {
   // 获取产品数据
   getProducts: (): Product[] => {
     if (typeof window === 'undefined') return initialProducts;
+    storage.ensureInitialized();
     const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
     return storage.safeJSONParse(stored, initialProducts);
   },
@@ -190,12 +216,14 @@ const storage = {
   // 保存产品数据
   setProducts: (products: Product[]): void => {
     if (typeof window === 'undefined') return;
+    storage.ensureInitialized();
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   },
 
   // 获取用户数据
   getUsers: (): User[] => {
     if (typeof window === 'undefined') return initialUsers;
+    storage.ensureInitialized();
     const stored = localStorage.getItem(STORAGE_KEYS.USERS);
     return storage.safeJSONParse(stored, initialUsers);
   },
@@ -203,12 +231,14 @@ const storage = {
   // 保存用户数据
   setUsers: (users: User[]): void => {
     if (typeof window === 'undefined') return;
+    storage.ensureInitialized();
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
   },
 
   // 获取订单数据
   getOrders: (): Order[] => {
     if (typeof window === 'undefined') return [];
+    storage.ensureInitialized();
     const stored = localStorage.getItem(STORAGE_KEYS.ORDERS);
     return storage.safeJSONParse(stored, []);
   },
@@ -216,32 +246,10 @@ const storage = {
   // 保存订单数据
   setOrders: (orders: Order[]): void => {
     if (typeof window === 'undefined') return;
+    storage.ensureInitialized();
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   }
 };
-
-// 初始化数据（确保localStorage中有初始数据）
-const initializeData = () => {
-  if (typeof window === 'undefined') return;
-  
-  // 如果localStorage中没有产品数据，使用初始数据
-  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-    storage.setProducts(initialProducts);
-  }
-  
-  // 如果localStorage中没有用户数据，使用初始数据
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    storage.setUsers(initialUsers);
-  }
-  
-  // 如果localStorage中没有订单数据，初始化为空数组
-  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-    storage.setOrders([]);
-  }
-};
-
-// 调用初始化
-initializeData();
 
 // 模拟延迟函数
 const simulateDelay = (ms: number): Promise<void> => {
