@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, LoginCredentials, RegisterData } from '@/types';
 import { mockAuthService } from '@/lib/services/mockDataService';
+import { securityService } from '@/lib/services/securityService';
 import { toast } from 'sonner';
 
 interface AuthState {
@@ -42,7 +43,16 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       
-      logout: () => {
+      logout: async () => {
+        const currentUser = get().user;
+        if (currentUser) {
+          try {
+            await mockAuthService.logout(currentUser.id);
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
+        }
+        
         set({ 
           user: null, 
           isAuthenticated: false 
@@ -96,7 +106,7 @@ export const useAuthStore = create<AuthState>()(
                 user: null, 
                 isAuthenticated: false 
               });
-              toast.error('登录已过期，请重新登录');
+              toast.error('登录会话已失效，请重新登录');
             } else {
               set({ isAuthenticated: true });
             }
@@ -105,6 +115,7 @@ export const useAuthStore = create<AuthState>()(
               user: null, 
               isAuthenticated: false 
             });
+            toast.error('验证失败，请重新登录');
           }
         }
       }

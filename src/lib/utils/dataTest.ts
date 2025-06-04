@@ -1,192 +1,171 @@
-// 数据持久化测试工具
-export const dataTest = {
-  // 检查localStorage中的所有数据
-  checkStorage: () => {
-    if (typeof window === 'undefined') {
-      console.log('服务器端环境，无法访问localStorage');
-      return;
-    }
+// 数据测试工具 - 开发环境下调试用
+import { mockProductService } from '@/lib/services/mockDataService';
+import { securityService } from '@/lib/services/securityService';
 
-    console.log('=== localStorage 数据检查 ===');
+export const dataTestUtils = {
+  // 检查存储状态
+  checkStorageStatus: (): void => {
+    console.log('=== 数据存储状态检查 ===');
     
-    // 检查产品数据
     const products = localStorage.getItem('tn-scxd-products');
-    console.log('产品数据:', products ? JSON.parse(products).length + ' 个产品' : '无数据');
-    
-    // 检查用户数据
     const users = localStorage.getItem('tn-scxd-users');
-    console.log('用户数据:', users ? JSON.parse(users).length + ' 个用户' : '无数据');
-    
-    // 检查订单数据
     const orders = localStorage.getItem('tn-scxd-orders');
-    console.log('订单数据:', orders ? JSON.parse(orders).length + ' 个订单' : '无数据');
     
-    console.log('=== 数据检查完毕 ===');
+    console.log('产品数据:', products ? JSON.parse(products).length + ' 条记录' : '无数据');
+    console.log('用户数据:', users ? JSON.parse(users).length + ' 条记录' : '无数据');
+    console.log('订单数据:', orders ? JSON.parse(orders).length + ' 条记录' : '无数据');
+    
+    // 安全数据检查
+    const loginAttempts = localStorage.getItem('tn-scxd-login-attempts');
+    const userSessions = localStorage.getItem('tn-scxd-user-sessions');
+    const blockedIPs = localStorage.getItem('tn-scxd-blocked-ips');
+    
+    console.log('登录尝试:', loginAttempts ? JSON.parse(loginAttempts).length + ' 条记录' : '无数据');
+    console.log('用户会话:', userSessions ? JSON.parse(userSessions).length + ' 条记录' : '无数据');
+    console.log('被阻止IP:', blockedIPs ? JSON.parse(blockedIPs).length + ' 条记录' : '无数据');
+    
+    console.log('======================');
   },
 
-  // 详细检查产品状态
-  checkProductStatus: () => {
-    if (typeof window === 'undefined') return [];
-    
-    const products = localStorage.getItem('tn-scxd-products');
-    if (!products) {
-      console.log('没有产品数据');
-      return [];
-    }
-    
-    const data = JSON.parse(products);
-    const activeProducts = data.filter((p: any) => p.isActive);
-    const inactiveProducts = data.filter((p: any) => !p.isActive);
-    
-    console.log('=== 产品状态详情 ===');
-    console.log('总产品数:', data.length);
-    console.log('激活产品数:', activeProducts.length);
-    console.log('禁用产品数:', inactiveProducts.length);
-    
-    console.log('激活的产品:');
-    activeProducts.forEach((p: any, index: number) => {
-      console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id}) - 创建时间: ${p.createdAt}`);
-    });
-    
-    if (inactiveProducts.length > 0) {
-      console.log('禁用的产品:');
-      inactiveProducts.forEach((p: any, index: number) => {
-        console.log(`  ${index + 1}. ${p.productCode} (ID: ${p.id}) - 创建时间: ${p.createdAt}`);
+  // 模拟用户视图
+  simulateUserView: async (): Promise<void> => {
+    console.log('=== 模拟用户视图 ===');
+    try {
+      const products = await mockProductService.getAll();
+      console.log('用户可见产品数量:', products.length);
+      console.log('用户可见产品列表:');
+      products.forEach(p => {
+        console.log(`- ${p.productCode}: ${p.isActive ? '激活' : '禁用'}`);
       });
+    } catch (error) {
+      console.error('获取用户产品失败:', error);
     }
-    
-    console.log('=== 产品状态检查完毕 ===');
-    return { total: data.length, active: activeProducts, inactive: inactiveProducts };
+    console.log('==================');
   },
 
-  // 清空所有数据
-  clearAllData: () => {
-    if (typeof window === 'undefined') return;
+  // 模拟管理员视图
+  simulateAdminView: async (): Promise<void> => {
+    console.log('=== 模拟管理员视图 ===');
+    try {
+      const products = await mockProductService.getAllForAdmin();
+      console.log('管理员可见产品数量:', products.length);
+      console.log('管理员可见产品列表:');
+      products.forEach(p => {
+        console.log(`- ${p.productCode}: ${p.isActive ? '激活' : '禁用'}`);
+      });
+    } catch (error) {
+      console.error('获取管理员产品失败:', error);
+    }
+    console.log('=====================');
+  },
+
+  // 安全状态检查
+  checkSecurityStatus: (): void => {
+    console.log('=== 安全状态检查 ===');
     
+    const stats = securityService.getSecurityStats();
+    console.log('安全统计:', stats);
+    
+    const sessionStats = securityService.getActiveSessionsStats();
+    console.log('会话统计:', sessionStats);
+    
+    const isBlocked = securityService.isIPBlocked();
+    console.log('当前IP是否被阻止:', isBlocked);
+    
+    if (isBlocked) {
+      const remainingTime = securityService.getBlockTimeRemaining();
+      console.log('剩余阻止时间:', remainingTime, '分钟');
+    }
+    
+    console.log('==================');
+  },
+
+  // 模拟登录失败测试
+  simulateLoginFailures: (count: number = 3): void => {
+    console.log(`=== 模拟 ${count} 次登录失败 ===`);
+    
+    for (let i = 0; i < count; i++) {
+      securityService.recordLoginAttempt(false);
+      console.log(`第 ${i + 1} 次登录失败已记录`);
+    }
+    
+    const isBlocked = securityService.isIPBlocked();
+    console.log('IP是否被阻止:', isBlocked);
+    
+    if (isBlocked) {
+      const remainingTime = securityService.getBlockTimeRemaining();
+      console.log('阻止剩余时间:', remainingTime, '分钟');
+    }
+    
+    console.log('========================');
+  },
+
+  // 分析产品状态
+  analyzeProductStatus: async (): Promise<void> => {
+    console.log('=== 产品状态分析 ===');
+    try {
+      const allProducts = await mockProductService.getAllForAdmin();
+      const activeProducts = allProducts.filter(p => p.isActive);
+      const inactiveProducts = allProducts.filter(p => !p.isActive);
+      
+      console.log(`总产品数: ${allProducts.length}`);
+      console.log(`激活产品: ${activeProducts.length}`);
+      console.log(`禁用产品: ${inactiveProducts.length}`);
+      
+      console.log('\n激活产品详情:');
+      activeProducts.forEach(p => {
+        console.log(`- ${p.productCode}: 价格 ¥${p.unitPrice}, 创建时间 ${p.createdAt.toLocaleDateString()}`);
+      });
+      
+      if (inactiveProducts.length > 0) {
+        console.log('\n禁用产品详情:');
+        inactiveProducts.forEach(p => {
+          console.log(`- ${p.productCode}: 价格 ¥${p.unitPrice}, 创建时间 ${p.createdAt.toLocaleDateString()}`);
+        });
+      }
+    } catch (error) {
+      console.error('分析产品状态失败:', error);
+    }
+    console.log('==================');
+  },
+
+  // 清理所有数据
+  clearAllData: (): void => {
+    console.log('=== 清理所有数据 ===');
+    
+    // 清理业务数据
     localStorage.removeItem('tn-scxd-products');
     localStorage.removeItem('tn-scxd-users');
     localStorage.removeItem('tn-scxd-orders');
     
-    console.log('所有localStorage数据已清空');
-    // 触发页面刷新以重新初始化
-    window.location.reload();
+    // 清理安全数据
+    securityService.clearAllSecurityData();
+    
+    // 清理其他数据
+    localStorage.removeItem('auth-storage');
+    localStorage.removeItem('cart-storage');
+    localStorage.removeItem('client-id');
+    
+    console.log('所有数据已清理完成');
+    console.log('==================');
   },
 
-  // 检查特定产品
-  checkProducts: () => {
-    if (typeof window === 'undefined') return [];
+  // 完整测试套件
+  runFullTest: async (): Promise<void> => {
+    console.log('🚀 开始完整数据测试');
     
-    const products = localStorage.getItem('tn-scxd-products');
-    if (products) {
-      const data = JSON.parse(products);
-      console.log('产品列表:', data.map((p: any) => p.productCode));
-      return data;
-    }
-    return [];
-  },
-
-  // 模拟普通用户视图（只看激活产品）
-  getUserViewProducts: () => {
-    if (typeof window === 'undefined') return [];
+    await dataTestUtils.checkStorageStatus();
+    await dataTestUtils.checkSecurityStatus();
+    await dataTestUtils.analyzeProductStatus();
+    await dataTestUtils.simulateUserView();
+    await dataTestUtils.simulateAdminView();
     
-    const products = localStorage.getItem('tn-scxd-products');
-    if (!products) return [];
-    
-    const data = JSON.parse(products);
-    const userViewProducts = data
-      .filter((p: any) => p.isActive)
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    console.log('=== 普通用户视图 ===');
-    console.log('用户可见产品数:', userViewProducts.length);
-    userViewProducts.forEach((p: any, index: number) => {
-      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice} (${p.createdAt})`);
-    });
-    console.log('=== 用户视图检查完毕 ===');
-    
-    return userViewProducts;
-  },
-
-  // 模拟管理员视图（看所有产品）
-  getAdminViewProducts: () => {
-    if (typeof window === 'undefined') return [];
-    
-    const products = localStorage.getItem('tn-scxd-products');
-    if (!products) return [];
-    
-    const data = JSON.parse(products)
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    console.log('=== 管理员视图 ===');
-    console.log('管理员可见产品数:', data.length);
-    data.forEach((p: any, index: number) => {
-      const status = p.isActive ? '✓ 激活' : '✗ 禁用';
-      console.log(`  ${index + 1}. ${p.productCode} - ¥${p.unitPrice} [${status}] (${p.createdAt})`);
-    });
-    console.log('=== 管理员视图检查完毕 ===');
-    
-    return data;
-  },
-
-  // 强制刷新产品数据（用于调试持久化问题）
-  forceRefreshProducts: () => {
-    if (typeof window === 'undefined') return;
-    
-    console.log('=== 强制刷新产品数据 ===');
-    
-    // 检查当前localStorage状态
-    const current = localStorage.getItem('tn-scxd-products');
-    if (current) {
-      const data = JSON.parse(current);
-      console.log('当前localStorage中的产品数:', data.length);
-      
-      // 触发页面刷新以确保数据同步
-      console.log('刷新页面以同步数据...');
-      window.location.reload();
-    } else {
-      console.log('localStorage中没有产品数据');
-    }
-  },
-
-  // 测试产品上传流程
-  testProductUpload: () => {
-    if (typeof window === 'undefined') return;
-    
-    console.log('=== 测试产品上传流程 ===');
-    
-    // 模拟一个测试产品
-    const testProduct = {
-      id: `test-${Date.now()}`,
-      productCode: `TEST-${Date.now()}`,
-      image: '',
-      availableDimensions: ['30cm x 30cm x 5cm'],
-      weight: 2.5,
-      pieceCount: 4,
-      minimumOrderQty: 10,
-      availableColors: ['红色', '蓝色'],
-      unitPrice: 45.00,
-      remarks: '测试产品',
-      features: ['测试特性'],
-      applications: '测试应用',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // 获取现有产品
-    const products = JSON.parse(localStorage.getItem('tn-scxd-products') || '[]');
-    products.unshift(testProduct);
-    localStorage.setItem('tn-scxd-products', JSON.stringify(products));
-    
-    console.log('测试产品已添加:', testProduct.productCode);
-    console.log('当前产品总数:', products.length);
-    
-    // 验证添加结果
-    dataTest.getUserViewProducts();
+    console.log('✅ 完整数据测试完成');
   }
 };
 
-// 在开发环境下暴露到全局，方便调试
+// 开发环境下导出到全局对象
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  (window as any).dataTest = dataTest;
+  (window as any).dataTest = dataTestUtils;
+  console.log('💡 数据测试工具已加载，使用 dataTest.runFullTest() 运行完整测试');
 } 

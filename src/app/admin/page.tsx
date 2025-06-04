@@ -30,7 +30,8 @@ import {
   CheckCircle,
   Truck,
   Bell,
-  Trash2
+  Trash2,
+  Shield
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockOrderService, mockAuthService } from '@/lib/services/mockDataService';
@@ -432,6 +433,49 @@ export default function AdminPage() {
           </p>
         </div>
 
+        {/* 快速操作卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link href="/admin/products/edit">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Package className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-lg font-medium text-gray-900">产品管理</p>
+                    <p className="text-sm text-gray-600">管理产品信息和库存</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/security">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Shield className="h-8 w-8 text-red-600" />
+                  <div className="ml-4">
+                    <p className="text-lg font-medium text-gray-900">安全管理</p>
+                    <p className="text-sm text-gray-600">监控登录安全和会话</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setIsAddUserDialogOpen(true)}>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <UserPlus className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-lg font-medium text-gray-900">添加用户</p>
+                  <p className="text-sm text-gray-600">创建新的系统用户</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -485,11 +529,12 @@ export default function AdminPage() {
 
         {/* 管理选项卡 */}
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="orders" className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50">订单管理</TabsTrigger>
             <TabsTrigger value="products" className="text-green-600 data-[state=active]:text-green-700 data-[state=active]:bg-green-50">产品管理</TabsTrigger>
             <TabsTrigger value="customers" className="text-purple-600 data-[state=active]:text-purple-700 data-[state=active]:bg-purple-50">客户管理</TabsTrigger>
             <TabsTrigger value="users" className="text-orange-600 data-[state=active]:text-orange-700 data-[state=active]:bg-orange-50">用户管理</TabsTrigger>
+            <TabsTrigger value="security" className="text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50">安全管理</TabsTrigger>
             <TabsTrigger value="settings" className="text-gray-600 data-[state=active]:text-gray-700 data-[state=active]:bg-gray-50">系统设置</TabsTrigger>
           </TabsList>
 
@@ -793,6 +838,50 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 安全管理 */}
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  安全管理
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="text-center py-8">
+                    <Shield className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">系统安全监控</h3>
+                    <p className="text-gray-600 mb-6">
+                      管理登录安全、会话控制和IP访问限制
+                    </p>
+                    <Link href="/admin/security">
+                      <Button size="lg" className="bg-red-600 hover:bg-red-700">
+                        <Shield className="h-4 w-4 mr-2" />
+                        进入安全管理
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
+                    <div className="text-center p-4 bg-red-50 rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">IP限制</div>
+                      <div className="text-sm text-gray-600 mt-1">单IP登录保护</div>
+                    </div>
+                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600">防暴力破解</div>
+                      <div className="text-sm text-gray-600 mt-1">登录尝试限制</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">会话管理</div>
+                      <div className="text-sm text-gray-600 mt-1">实时会话监控</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

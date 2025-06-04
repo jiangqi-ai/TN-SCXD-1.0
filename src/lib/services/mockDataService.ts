@@ -8,6 +8,7 @@ import type {
   RegisterData 
 } from '@/types';
 import { generateId, generateOrderId } from "@/lib/utils/helpers";
+import { securityService } from './securityService';
 
 // 从环境变量获取默认密码
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
@@ -483,6 +484,12 @@ export const mockOrderService = {
 // 用户认证服务
 export const mockAuthService = {
   async login(credentials: LoginCredentials): Promise<User> {
+    // 检查IP是否被阻止
+    if (securityService.isIPBlocked()) {
+      const remainingTime = securityService.getBlockTimeRemaining();
+      throw new Error(`IP已被临时阻止，请在${remainingTime}分钟后重试`);
+    }
+
     await simulateDelay(800);
     const users = storage.getUsers();
     const user = users.find(u => 
@@ -492,8 +499,24 @@ export const mockAuthService = {
     );
     
     if (!user) {
+      // 记录失败的登录尝试
+      securityService.recordLoginAttempt(false);
       throw new Error('用户名或密码错误');
     }
+
+    // 检查用户是否已在其他IP登录
+    const sessionCheck = securityService.checkUserSession(user.id);
+    if (sessionCheck.hasActiveSession) {
+      // 记录失败的登录尝试（重复登录）
+      securityService.recordLoginAttempt(false);
+      throw new Error('该账户已在其他设备登录，请先退出后重试');
+    }
+
+    // 记录成功的登录尝试
+    securityService.recordLoginAttempt(true);
+    
+    // 创建用户会话
+    securityService.createUserSession(user.id);
 
     // 返回用户信息（不包含密码）
     const { password, ...userWithoutPassword } = user;
@@ -501,6 +524,12 @@ export const mockAuthService = {
   },
 
   async register(userData: RegisterData): Promise<User> {
+    // 检查IP是否被阻止
+    if (securityService.isIPBlocked()) {
+      const remainingTime = securityService.getBlockTimeRemaining();
+      throw new Error(`IP已被临时阻止，请在${remainingTime}分钟后重试`);
+    }
+
     await simulateDelay(600);
     const users = storage.getUsers();
     
@@ -533,9 +562,18 @@ export const mockAuthService = {
     users.push(newUser);
     storage.setUsers(users);
 
+    // 创建用户会话
+    securityService.createUserSession(newUser.id);
+
     // 返回用户信息（不包含密码）
     const { password, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
+  },
+
+  async logout(userId: string): Promise<void> {
+    await simulateDelay(200);
+    // 移除用户会话
+    securityService.removeUserSession(userId);
   },
 
   async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -556,6 +594,9 @@ export const mockAuthService = {
 
     storage.setUsers(users);
 
+    // 更新会话活动时间
+    securityService.updateSessionActivity(userId);
+
     // 返回更新后的用户信息（不包含密码）
     const { password, ...userWithoutPassword } = users[userIndex]!;
     return userWithoutPassword;
@@ -565,7 +606,21 @@ export const mockAuthService = {
     await simulateDelay(200);
     const users = storage.getUsers();
     const user = users.find(u => u.id === userId && u.isActive);
-    return !!user;
+    
+    if (!user) {
+      return false;
+    }
+
+    // 检查会话是否有效
+    const sessionCheck = securityService.checkUserSession(userId);
+    if (sessionCheck.hasActiveSession) {
+      // 用户在其他设备登录，当前会话无效
+      return false;
+    }
+
+    // 更新会话活动时间
+    securityService.updateSessionActivity(userId);
+    return true;
   },
 
   async getAllCustomers(): Promise<User[]> {
@@ -574,5 +629,42 @@ export const mockAuthService = {
     return users
       .filter(u => u.role === 'customer' && u.isActive)
       .map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+  },
+
+  // 管理员功能：强制下线用户
+  async forceLogoutUser(adminUserId: string, targetUserId: string): Promise<void> {
+    await simulateDelay(300);
+    const users = storage.getUsers();
+    const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
+    
+    if (!admin) {
+      throw new Error('权限不足');
+    }
+
+    securityService.forceLogoutUser(targetUserId);
+  },
+
+  // 获取安全统计信息（管理员功能）
+  async getSecurityStats(adminUserId: string): Promise<{
+    blockedIPs: number;
+    activeAttempts: number;
+    activeSessions: number;
+    sessionStats: { totalSessions: number; sessionsByIP: { [ip: string]: number } };
+  }> {
+    await simulateDelay(200);
+    const users = storage.getUsers();
+    const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
+    
+    if (!admin) {
+      throw new Error('权限不足');
+    }
+
+    const securityStats = securityService.getSecurityStats();
+    const sessionStats = securityService.getActiveSessionsStats();
+
+    return {
+      ...securityStats,
+      sessionStats
+    };
   }
 }; 
