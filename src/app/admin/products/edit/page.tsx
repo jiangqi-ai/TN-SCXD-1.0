@@ -60,7 +60,7 @@ export default function ProductEditPage() {
 
     const loadProducts = async () => {
       try {
-        const data = await mockProductService.getAll();
+        const data = await mockProductService.getAllForAdmin();
         setProducts(data);
         setFilteredProducts(data);
       } catch (error) {

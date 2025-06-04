@@ -274,6 +274,13 @@ export const mockProductService = {
     return products.filter(p => p.isActive);
   },
 
+  // 管理员专用：获取所有产品（包括禁用的）
+  async getAllForAdmin(): Promise<Product[]> {
+    await simulateDelay(500);
+    const products = storage.getProducts();
+    return products; // 返回所有产品，不过滤isActive状态
+  },
+
   async getById(id: string): Promise<Product | null> {
     await simulateDelay(200);
     const products = storage.getProducts();
