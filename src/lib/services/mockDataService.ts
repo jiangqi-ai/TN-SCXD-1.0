@@ -14,7 +14,93 @@ const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
 const DEFAULT_CUSTOMER_PASSWORD = process.env.DEFAULT_CUSTOMER_PASSWORD || 'customer123';
 
 // 模拟产品数据
-let mockProducts: Product[] = [];
+let mockProducts: Product[] = [
+  {
+    id: '1',
+    productCode: 'CW-001-30x30',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    availableDimensions: ['30cm x 30cm x 5cm', '25cm x 25cm x 4cm'],
+    weight: 2.5,
+    pieceCount: 4,
+    minimumOrderQty: 10,
+    availableColors: ['红色', '蓝色', '绿色', '黄色'],
+    unitPrice: 45.00,
+    remarks: '适合室内攀岩墙使用',
+    features: ['高强度材料，安全可靠', '精密加工，质量上乘', '多种规格可选，满足不同需求', '专业设计，操作简便', '严格质检，品质保证'],
+    applications: '适用于室内攀岩馆、户外天然岩壁、人工攀岩墙等各种攀岩场景。无论是初学者还是专业攀岩者，都能找到适合的规格和配置。',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: '2',
+    productCode: 'CW-002-25x25',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    availableDimensions: ['25cm x 25cm x 4cm', '20cm x 15cm x 10cm'],
+    weight: 1.8,
+    pieceCount: 6,
+    minimumOrderQty: 15,
+    availableColors: ['蓝色', '绿色', '黑色'],
+    unitPrice: 38.00,
+    remarks: '适合初学者训练使用',
+    features: ['轻量化设计', '易于安装', '表面防滑处理', '环保材质'],
+    applications: '主要用于初学者攀岩训练，适合攀岩馆的儿童区域和初级线路设置。',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: '3',
+    productCode: 'CW-003-35x35',
+    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    availableDimensions: ['35cm x 35cm x 6cm', '40cm x 30cm x 20cm'],
+    weight: 3.2,
+    pieceCount: 2,
+    minimumOrderQty: 8,
+    availableColors: ['绿色', '橙色', '紫色'],
+    unitPrice: 55.00,
+    remarks: '专业级攀岩点，适合高难度线路',
+    features: ['超强握力', '耐磨损设计', '专业认证', '长期耐用'],
+    applications: '专为高难度攀岩线路设计，适用于竞赛级攀岩墙和专业训练场所。',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: '4',
+    productCode: 'CW-004-50x40',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    availableDimensions: ['50cm x 40cm x 30cm'],
+    weight: 5.0,
+    pieceCount: 1,
+    minimumOrderQty: 5,
+    availableColors: ['红色', '黄色'],
+    unitPrice: 88.00,
+    remarks: '大型攀岩点，创造挑战性路线',
+    features: ['大尺寸设计', '多握点选择', '稳固安装', '视觉突出'],
+    applications: '用于创建具有挑战性的攀岩路线，适合高级攀岩者和竞赛使用。',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: '5',
+    productCode: 'CW-005-20x15',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    availableDimensions: ['20cm x 15cm x 10cm'],
+    weight: 1.2,
+    pieceCount: 8,
+    minimumOrderQty: 20,
+    availableColors: ['白色', '灰色', '黑色', '红色'],
+    unitPrice: 28.00,
+    remarks: '小型训练点，适合技巧练习',
+    features: ['小巧便携', '易于抓握', '适合训练', '多颜色可选'],
+    applications: '主要用于技巧训练和热身练习，适合各个水平的攀岩者进行基础动作练习。',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  }
+];
 
 // 模拟用户数据
 let mockUsers: User[] = [
@@ -69,129 +155,7 @@ let mockUsers: User[] = [
 ];
 
 // 模拟订单数据
-let mockOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-2025-001',
-    customerId: 'customer1',
-    customerInfo: {
-      name: '张三',
-      company: '某攀岩俱乐部',
-      contact: '13800138001',
-      email: 'zhangsan@example.com',
-      deliveryAddress: '北京市朝阳区某某路123号',
-      specialRequirements: '请在周五前完成生产'
-    },
-    items: [
-      {
-        productId: '1',
-        productCode: 'CW-001-30x30',
-        productName: 'CW-001-30x30',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        selectedDimension: '30cm x 30cm x 5cm',
-        weight: 2.5,
-        pieceCount: 4,
-        selectedColor: '红色',
-        quantity: 10,
-        unitPrice: 45.00,
-        subtotal: 450.00
-      },
-      {
-        productId: '2',
-        productCode: 'CW-002-25x25',
-        productName: 'CW-002-25x25',
-        image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        selectedDimension: '25cm x 25cm x 4cm',
-        weight: 1.8,
-        pieceCount: 6,
-        selectedColor: '蓝色',
-        quantity: 15,
-        unitPrice: 38.00,
-        subtotal: 570.00
-      }
-    ],
-    totalAmount: 1020.00,
-    status: 'production',
-    orderDate: new Date('2025-01-10T09:30:00'),
-    confirmedAt: new Date('2025-01-10T14:20:00'),
-    productionStartedAt: new Date('2025-01-11T08:00:00'),
-    deliveryDate: new Date('2025-01-15T00:00:00'),
-    paymentMethod: 'bill_confirm',
-    productionNotes: '客户要求加急处理',
-    createdAt: new Date('2025-01-10T09:30:00'),
-    updatedAt: new Date('2025-01-11T08:00:00')
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-2025-002',
-    customerId: 'customer1',
-    customerInfo: {
-      name: '张三',
-      company: '某攀岩俱乐部',
-      contact: '13800138001',
-      email: 'zhangsan@example.com',
-      deliveryAddress: '北京市朝阳区某某路123号'
-    },
-    items: [
-      {
-        productId: '3',
-        productCode: 'CW-003-35x35',
-        productName: 'CW-003-35x35',
-        image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        selectedDimension: '35cm x 35cm x 6cm',
-        weight: 3.2,
-        pieceCount: 2,
-        selectedColor: '绿色',
-        quantity: 8,
-        unitPrice: 55.00,
-        subtotal: 440.00
-      }
-    ],
-    totalAmount: 440.00,
-    status: 'completed',
-    orderDate: new Date('2025-01-08T11:15:00'),
-    confirmedAt: new Date('2025-01-08T16:30:00'),
-    productionStartedAt: new Date('2025-01-09T09:00:00'),
-    deliveryDate: new Date('2025-01-12T00:00:00'),
-    completedAt: new Date('2025-01-12T15:45:00'),
-    paymentMethod: 'bill_confirm',
-    createdAt: new Date('2025-01-08T11:15:00'),
-    updatedAt: new Date('2025-01-12T15:45:00')
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-2025-003',
-    customerId: 'customer2',
-    customerInfo: {
-      name: '李四',
-      company: '户外运动中心',
-      contact: '13900139002',
-      email: 'lisi@example.com',
-      deliveryAddress: '上海市浦东新区某某街456号'
-    },
-    items: [
-      {
-        productId: '1',
-        productCode: 'CW-001-30x30',
-        productName: 'CW-001-30x30',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        selectedDimension: '30cm x 30cm x 5cm',
-        weight: 2.5,
-        pieceCount: 4,
-        selectedColor: '黄色',
-        quantity: 20,
-        unitPrice: 45.00,
-        subtotal: 900.00
-      }
-    ],
-    totalAmount: 900.00,
-    status: 'pending',
-    orderDate: new Date('2025-01-12T10:00:00'),
-    paymentMethod: 'bill_confirm',
-    createdAt: new Date('2025-01-12T10:00:00'),
-    updatedAt: new Date('2025-01-12T10:00:00')
-  }
-];
+let mockOrders: Order[] = [];
 
 // 模拟延迟函数
 const simulateDelay = (ms: number): Promise<void> => {
@@ -366,6 +330,14 @@ export const mockOrderService = {
     
     order.productionNotes = notes;
     order.updatedAt = new Date();
+  },
+
+  async delete(orderId: string): Promise<void> {
+    await simulateDelay(300);
+    const orderIndex = mockOrders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error('Order not found');
+    
+    mockOrders.splice(orderIndex, 1);
   }
 };
 

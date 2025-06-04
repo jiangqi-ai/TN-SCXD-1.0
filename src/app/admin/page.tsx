@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
   Users, 
   Package, 
@@ -27,7 +29,8 @@ import {
   Calendar,
   CheckCircle,
   Truck,
-  Bell
+  Bell,
+  Trash2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockOrderService, mockAuthService } from '@/lib/services/mockDataService';
@@ -90,6 +93,7 @@ export default function AdminPage() {
     phone: '',
     role: 'customer' as 'admin' | 'customer'
   });
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'admin') {
@@ -359,6 +363,22 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      setDeletingOrderId(orderId);
+      await mockOrderService.delete(orderId);
+      // 重新加载订单列表
+      const updatedOrders = await mockOrderService.getAll();
+      setOrders(updatedOrders);
+      toast.success('订单已删除');
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+      toast.error('删除订单失败');
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
+
   if (!isAuthenticated || user?.role !== 'admin') {
     return null;
   }
@@ -465,12 +485,12 @@ export default function AdminPage() {
 
         {/* 管理选项卡 */}
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="orders">订单管理</TabsTrigger>
-            <TabsTrigger value="products">产品管理</TabsTrigger>
-            <TabsTrigger value="customers">客户管理</TabsTrigger>
-            <TabsTrigger value="users">用户管理</TabsTrigger>
-            <TabsTrigger value="settings">系统设置</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="orders" className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50">订单管理</TabsTrigger>
+            <TabsTrigger value="products" className="text-green-600 data-[state=active]:text-green-700 data-[state=active]:bg-green-50">产品管理</TabsTrigger>
+            <TabsTrigger value="customers" className="text-purple-600 data-[state=active]:text-purple-700 data-[state=active]:bg-purple-50">客户管理</TabsTrigger>
+            <TabsTrigger value="users" className="text-orange-600 data-[state=active]:text-orange-700 data-[state=active]:bg-orange-50">用户管理</TabsTrigger>
+            <TabsTrigger value="settings" className="text-gray-600 data-[state=active]:text-gray-700 data-[state=active]:bg-gray-50">系统设置</TabsTrigger>
           </TabsList>
 
           {/* 订单管理 */}
@@ -578,6 +598,34 @@ export default function AdminPage() {
                             查看详情
                           </Button>
                         </Link>
+                        {(order.status === 'pending' || order.status === 'cancelled') && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                删除
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>确认删除订单</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  您确定要删除订单 {order.orderNumber} 吗？此操作不可撤销。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  disabled={deletingOrderId === order.id}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {deletingOrderId === order.id ? '删除中...' : '确认删除'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -776,12 +824,13 @@ export default function AdminPage() {
                     <h3 className="text-lg font-medium mb-4">业务设置</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">免运费金额</label>
-                        <p className="text-sm text-gray-600">所有订单免运费</p>
+                        <label className="block text-sm font-medium mb-2">运费政策</label>
+                        <p className="text-sm text-gray-600">运费到付</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">客服信息</label>
-                        <p className="text-sm text-gray-600">400-123-4567</p>
+                        <p className="text-sm text-gray-600">13632603365</p>
+                        <p className="text-sm text-gray-600">good-181@163.com</p>
                       </div>
                     </div>
                   </div>

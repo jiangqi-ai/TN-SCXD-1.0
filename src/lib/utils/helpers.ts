@@ -59,7 +59,7 @@ export const generateId = (): string => {
 export const generateOrderId = (): string => {
   const timestamp = Date.now().toString();
   const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-  return `ORD${timestamp.slice(-8)}${random}`;
+  return `HZTN${timestamp.slice(-8)}${random}`;
 };
 
 // 邮箱验证

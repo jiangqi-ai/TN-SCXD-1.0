@@ -57,7 +57,7 @@ JWT_SECRET=your-jwt-secret-key-here
 
 # 应用配置
 NEXT_PUBLIC_APP_NAME=攀岩墙定制系统
-NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_APP_VERSION=1.0.1
 ```
 
 ### 3. 启动开发服务器
@@ -111,7 +111,7 @@ src/
 | `DEFAULT_CUSTOMER_PASSWORD` | 默认客户密码 | `customer123` |
 | `JWT_SECRET` | JWT 签名密钥 | - |
 | `NEXT_PUBLIC_APP_NAME` | 应用名称 | `攀岩墙定制系统` |
-| `NEXT_PUBLIC_APP_VERSION` | 应用版本 | `1.0.0` |
+| `NEXT_PUBLIC_APP_VERSION` | 应用版本 | `1.0.1` |
 
 ## 🔒 安全注意事项
 

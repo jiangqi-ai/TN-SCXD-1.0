@@ -10,6 +10,8 @@ export interface Product {
   availableColors: string[];
   unitPrice: number;
   remarks?: string;
+  features?: string[];
+  applications?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

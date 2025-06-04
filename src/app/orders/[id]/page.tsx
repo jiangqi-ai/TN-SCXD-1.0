@@ -354,8 +354,8 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   如有任何问题，请联系我们的客服团队
                 </p>
                 <div className="space-y-2 text-sm">
-                  <p><strong>客服电话:</strong> 400-123-4567</p>
-                  <p><strong>客服邮箱:</strong> service@example.com</p>
+                  <p><strong>客服电话:</strong> 13632603365</p>
+                  <p><strong>客服邮箱:</strong> good-181@163.com</p>
                   <p><strong>服务时间:</strong> 9:00-18:00</p>
                 </div>
               </CardContent>

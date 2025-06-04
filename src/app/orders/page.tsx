@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Package, FileText, Calendar, Eye, ArrowLeft } from 'lucide-react';
+import { Search, Package, FileText, Calendar, Eye, ArrowLeft, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockOrderService } from '@/lib/services/mockDataService';
 import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
@@ -24,6 +25,7 @@ export default function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -69,30 +71,30 @@ export default function OrdersPage() {
     setFilteredOrders(filtered);
   }, [orders, searchTerm, statusFilter]);
 
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      setDeletingOrderId(orderId);
+      await mockOrderService.delete(orderId);
+      setOrders(prev => prev.filter(order => order.id !== orderId));
+      toast.success('订单已删除');
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+      toast.error('删除订单失败');
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
+
   const OrderCard = ({ order }: { order: Order }) => (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">{order.orderNumber}</CardTitle>
             <p className="text-sm text-gray-600 mt-1">
-              下单时间: {formatDate(order.orderDate)}
+              <Calendar className="inline h-4 w-4 mr-1" />
+              {formatDate(order.orderDate)}
             </p>
-            {order.confirmedAt && (
-              <p className="text-sm text-green-600 mt-1">
-                确认时间: {formatDate(order.confirmedAt, 'short')}
-              </p>
-            )}
-            {order.productionStartedAt && (
-              <p className="text-sm text-blue-600 mt-1">
-                生产开始: {formatDate(order.productionStartedAt, 'short')}
-              </p>
-            )}
-            {order.completedAt && (
-              <p className="text-sm text-green-600 mt-1">
-                完成时间: {formatDate(order.completedAt, 'short')}
-              </p>
-            )}
           </div>
           <Badge className={getOrderStatusColor(order.status)}>
             {getOrderStatusText(order.status)}
@@ -133,7 +135,7 @@ export default function OrdersPage() {
           </div>
 
           {/* 订单金额和操作 */}
-          <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex justify-between items-end pt-4 border-t">
             <div>
               <p className="text-lg font-semibold text-primary">
                 总计: {formatPrice(order.totalAmount)}
@@ -145,7 +147,7 @@ export default function OrdersPage() {
                 </p>
               )}
             </div>
-            <div className="space-x-2">
+            <div className="flex items-center gap-2">
               <Link href={`/orders/${order.id}`}>
                 <Button variant="outline" size="sm">
                   <Eye className="h-4 w-4 mr-1" />
@@ -153,9 +155,37 @@ export default function OrdersPage() {
                 </Button>
               </Link>
               {order.status === 'pending' && (
-                <Button size="sm" variant="destructive">
-                  取消订单
-                </Button>
+                <>
+                  <Button size="sm" variant="destructive">
+                    取消订单
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        删除
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>确认删除订单</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          您确定要删除订单 {order.orderNumber} 吗？此操作不可撤销。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteOrder(order.id)}
+                          disabled={deletingOrderId === order.id}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {deletingOrderId === order.id ? '删除中...' : '确认删除'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               )}
             </div>
           </div>

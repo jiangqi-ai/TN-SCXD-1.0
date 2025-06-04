@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ShoppingCart, Package, Star, Truck, Shield, Phone } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, Star, Truck, Shield, Phone, Edit } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { mockProductService } from '@/lib/services/mockDataService';
@@ -23,7 +23,7 @@ interface ProductDetailPageProps {
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { addItem } = useCartStore();
   const resolvedParams = use(params);
   const [product, setProduct] = useState<Product | null>(null);
@@ -121,13 +121,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 返回按钮 */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link href="/products">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               返回产品列表
             </Button>
           </Link>
+          {user?.role === 'admin' && (
+            <Link href={`/admin/products/edit?id=${product.id}`}>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                编辑产品
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -280,16 +288,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <h3 className="text-lg font-medium mb-4">服务保障</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
-                  <Truck className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-sm">全国包邮，3-7天到达</span>
-                </div>
-                <div className="flex items-center">
                   <Shield className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-sm">质量保证，30天无理由退换</span>
+                  <span className="text-sm">质量保证，有问题随时更换</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-sm">7×24小时客服支持</span>
+                  <span className="text-sm">客服电话：13632603365</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-5 w-5 text-green-600 mr-3" />
+                  <span className="text-sm">客服邮箱：good-181@163.com</span>
                 </div>
               </div>
             </div>
@@ -308,19 +316,24 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   {product.productCode} 是我们精心设计的攀岩装备产品，采用高质量材料制作而成。
                   适用于各种攀岩环境和难度等级，为攀岩爱好者提供可靠的安全保障和优秀的使用体验。
                 </p>
-                <h4 className="text-lg font-medium mt-6 mb-3">产品特点</h4>
-                <ul className="list-disc list-inside space-y-2 text-gray-600">
-                  <li>高强度材料，安全可靠</li>
-                  <li>精密加工，质量上乘</li>
-                  <li>多种规格可选，满足不同需求</li>
-                  <li>专业设计，操作简便</li>
-                  <li>严格质检，品质保证</li>
-                </ul>
-                <h4 className="text-lg font-medium mt-6 mb-3">适用场景</h4>
-                <p className="text-gray-600">
-                  适用于室内攀岩馆、户外天然岩壁、人工攀岩墙等各种攀岩场景。
-                  无论是初学者还是专业攀岩者，都能找到适合的规格和配置。
-                </p>
+                {product.features && product.features.length > 0 && (
+                  <>
+                    <h4 className="text-lg font-medium mt-6 mb-3">产品特点</h4>
+                    <ul className="list-disc list-inside space-y-2 text-gray-600">
+                      {product.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {product.applications && (
+                  <>
+                    <h4 className="text-lg font-medium mt-6 mb-3">适用场景</h4>
+                    <p className="text-gray-600">
+                      {product.applications}
+                    </p>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

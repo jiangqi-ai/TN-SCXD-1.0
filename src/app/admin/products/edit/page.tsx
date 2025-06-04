@@ -39,13 +39,25 @@ export default function ProductEditPage() {
     '50cm x 40cm x 30cm'
   ];
 
-  // 检查权限
+  // 检查权限 - 在useEffect中进行
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/admin');
+      return;
+    }
+  }, [isAuthenticated, user, router]);
+
+  // 如果权限验证失败，显示加载状态
   if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/admin');
-    return null;
+    return <div>Loading...</div>;
   }
 
   useEffect(() => {
+    // 只有通过权限验证才加载产品
+    if (!isAuthenticated || user?.role !== 'admin') {
+      return;
+    }
+
     const loadProducts = async () => {
       try {
         const data = await mockProductService.getAll();
@@ -60,7 +72,7 @@ export default function ProductEditPage() {
     };
 
     loadProducts();
-  }, []);
+  }, [isAuthenticated, user]);
 
   // 搜索筛选
   useEffect(() => {
@@ -340,9 +352,6 @@ export default function ProductEditPage() {
                     })}
                     placeholder="例如：20cm x 15cm x 10cm, 30cm x 30cm x 5cm"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    可用选项：{dimensionOptions.join(', ')}
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -410,6 +419,32 @@ export default function ProductEditPage() {
                       ...editingProduct,
                       availableColors: e.target.value.split(',').map(c => c.trim()).filter(Boolean)
                     })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="features">产品特点（用逗号分隔）</Label>
+                  <Input
+                    id="features"
+                    value={editingProduct.features?.join(',') || ''}
+                    onChange={(e) => setEditingProduct({
+                      ...editingProduct,
+                      features: e.target.value.split(',').map(f => f.trim()).filter(Boolean)
+                    })}
+                    placeholder="例如：高强度材料，精密加工，质量上乘"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="applications">适用场景</Label>
+                  <Textarea
+                    id="applications"
+                    value={editingProduct.applications || ''}
+                    onChange={(e) => setEditingProduct({
+                      ...editingProduct,
+                      applications: e.target.value
+                    })}
+                    placeholder="描述产品的适用场景和应用范围"
                   />
                 </div>
 

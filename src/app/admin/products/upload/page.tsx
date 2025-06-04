@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +26,17 @@ export default function ProductUploadPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<'select' | 'preview' | 'uploading' | 'complete'>('select');
 
-  // 检查权限
+  // 检查权限 - 在useEffect中进行
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/admin');
+      return;
+    }
+  }, [isAuthenticated, user, router]);
+
+  // 如果权限验证失败，显示加载状态
   if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/admin');
-    return null;
+    return <div>Loading...</div>;
   }
 
   const downloadTemplate = () => {
