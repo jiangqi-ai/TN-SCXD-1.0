@@ -13,8 +13,15 @@ import { generateId, generateOrderId } from "@/lib/utils/helpers";
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
 const DEFAULT_CUSTOMER_PASSWORD = process.env.DEFAULT_CUSTOMER_PASSWORD || 'customer123';
 
-// 模拟产品数据
-let mockProducts: Product[] = [
+// 存储键名
+const STORAGE_KEYS = {
+  PRODUCTS: 'tn-scxd-products',
+  USERS: 'tn-scxd-users', 
+  ORDERS: 'tn-scxd-orders'
+};
+
+// 初始产品数据
+const initialProducts: Product[] = [
   {
     id: '1',
     productCode: 'CW-001-30x30',
@@ -102,8 +109,8 @@ let mockProducts: Product[] = [
   }
 ];
 
-// 模拟用户数据
-let mockUsers: User[] = [
+// 初始用户数据
+const initialUsers: User[] = [
   {
     id: 'admin-1',
     username: 'admin',
@@ -154,8 +161,87 @@ let mockUsers: User[] = [
   }
 ];
 
-// 模拟订单数据
-let mockOrders: Order[] = [];
+// 存储工具函数
+const storage = {
+  // 安全的JSON解析
+  safeJSONParse: <T>(str: string | null, fallback: T): T => {
+    if (!str) return fallback;
+    try {
+      const parsed = JSON.parse(str);
+      // 转换日期字符串为Date对象
+      return JSON.parse(str, (key, value) => {
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+          return new Date(value);
+        }
+        return value;
+      });
+    } catch {
+      return fallback;
+    }
+  },
+
+  // 获取产品数据
+  getProducts: (): Product[] => {
+    if (typeof window === 'undefined') return initialProducts;
+    const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    return storage.safeJSONParse(stored, initialProducts);
+  },
+
+  // 保存产品数据
+  setProducts: (products: Product[]): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+  },
+
+  // 获取用户数据
+  getUsers: (): User[] => {
+    if (typeof window === 'undefined') return initialUsers;
+    const stored = localStorage.getItem(STORAGE_KEYS.USERS);
+    return storage.safeJSONParse(stored, initialUsers);
+  },
+
+  // 保存用户数据
+  setUsers: (users: User[]): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+
+  // 获取订单数据
+  getOrders: (): Order[] => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem(STORAGE_KEYS.ORDERS);
+    return storage.safeJSONParse(stored, []);
+  },
+
+  // 保存订单数据
+  setOrders: (orders: Order[]): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  }
+};
+
+// 初始化数据（确保localStorage中有初始数据）
+const initializeData = () => {
+  if (typeof window === 'undefined') return;
+  
+  // 如果localStorage中没有产品数据，使用初始数据
+  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
+    storage.setProducts(initialProducts);
+  }
+  
+  // 如果localStorage中没有用户数据，使用初始数据
+  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+    storage.setUsers(initialUsers);
+  }
+  
+  // 如果localStorage中没有订单数据，初始化为空数组
+  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+    storage.setOrders([]);
+  }
+};
+
+// 调用初始化
+initializeData();
 
 // 模拟延迟函数
 const simulateDelay = (ms: number): Promise<void> => {
@@ -166,56 +252,66 @@ const simulateDelay = (ms: number): Promise<void> => {
 export const mockProductService = {
   async getAll(): Promise<Product[]> {
     await simulateDelay(500);
-    return mockProducts.filter(p => p.isActive);
+    const products = storage.getProducts();
+    return products.filter(p => p.isActive);
   },
 
   async getById(id: string): Promise<Product | null> {
     await simulateDelay(200);
-    return mockProducts.find(p => p.id === id) || null;
+    const products = storage.getProducts();
+    return products.find(p => p.id === id) || null;
   },
 
   async create(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     await simulateDelay(300);
+    const products = storage.getProducts();
     const newProduct: Product = {
       ...productData,
       id: generateId(),
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    mockProducts.push(newProduct);
+    products.push(newProduct);
+    storage.setProducts(products);
     return newProduct;
   },
 
   async update(id: string, updates: Partial<Product>): Promise<Product> {
     await simulateDelay(300);
-    const index = mockProducts.findIndex(p => p.id === id);
+    const products = storage.getProducts();
+    const index = products.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Product not found');
     
-    const existingProduct = mockProducts[index];
+    const existingProduct = products[index];
     if (!existingProduct) throw new Error('Product not found');
     
-    mockProducts[index] = { 
+    products[index] = { 
       ...existingProduct, 
       ...updates, 
       updatedAt: new Date() 
     };
-    return mockProducts[index]!;
+    storage.setProducts(products);
+    return products[index]!;
   },
 
   async delete(id: string): Promise<void> {
     await simulateDelay(300);
-    const index = mockProducts.findIndex(p => p.id === id);
+    const products = storage.getProducts();
+    const index = products.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Product not found');
     
-    const product = mockProducts[index];
+    const product = products[index];
     if (product) {
       product.isActive = false;
+      storage.setProducts(products);
     }
   },
 
-  async uploadFromExcel(products: Product[]): Promise<void> {
+  async uploadFromExcel(newProducts: Product[]): Promise<void> {
     await simulateDelay(1000);
-    mockProducts.push(...products);
+    const products = storage.getProducts();
+    products.push(...newProducts);
+    storage.setProducts(products);
   }
 };
 
@@ -224,12 +320,14 @@ export const mockOrderService = {
   async create(orderData: CreateOrderRequest): Promise<Order> {
     await simulateDelay(500);
     
+    const orders = storage.getOrders();
+    const products = storage.getProducts();
     const orderNumber = generateOrderId();
     
     // 获取商品详细信息
     const orderItems: OrderItem[] = [];
     for (const item of orderData.items) {
-      const product = mockProducts.find(p => p.id === item.productId);
+      const product = products.find(p => p.id === item.productId);
       if (product) {
         orderItems.push({
           productId: item.productId,
@@ -268,32 +366,37 @@ export const mockOrderService = {
       updatedAt: new Date()
     };
     
-    mockOrders.unshift(newOrder);
+    orders.unshift(newOrder);
+    storage.setOrders(orders);
     return newOrder;
   },
 
   async getAll(): Promise<Order[]> {
     await simulateDelay(400);
-    return [...mockOrders].sort((a, b) => 
+    const orders = storage.getOrders();
+    return [...orders].sort((a, b) => 
       b.orderDate.getTime() - a.orderDate.getTime()
     );
   },
 
   async getByCustomer(customerId: string): Promise<Order[]> {
     await simulateDelay(400);
-    return mockOrders
+    const orders = storage.getOrders();
+    return orders
       .filter(order => order.customerId === customerId)
       .sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
   },
 
   async getById(orderId: string): Promise<Order | null> {
     await simulateDelay(200);
-    return mockOrders.find(o => o.id === orderId) || null;
+    const orders = storage.getOrders();
+    return orders.find(o => o.id === orderId) || null;
   },
 
   async updateStatus(orderId: string, status: Order['status']): Promise<void> {
     await simulateDelay(300);
-    const order = mockOrders.find(o => o.id === orderId);
+    const orders = storage.getOrders();
+    const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
     
     const now = new Date();
@@ -312,69 +415,76 @@ export const mockOrderService = {
         order.completedAt = now;
         break;
     }
+    
+    storage.setOrders(orders);
   },
 
   async setDeliveryDate(orderId: string, date: Date): Promise<void> {
     await simulateDelay(300);
-    const order = mockOrders.find(o => o.id === orderId);
+    const orders = storage.getOrders();
+    const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
     
     order.deliveryDate = date;
     order.updatedAt = new Date();
+    storage.setOrders(orders);
   },
 
   async addProductionNotes(orderId: string, notes: string): Promise<void> {
     await simulateDelay(300);
-    const order = mockOrders.find(o => o.id === orderId);
+    const orders = storage.getOrders();
+    const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
     
     order.productionNotes = notes;
     order.updatedAt = new Date();
+    storage.setOrders(orders);
   },
 
   async delete(orderId: string): Promise<void> {
     await simulateDelay(300);
-    const orderIndex = mockOrders.findIndex(o => o.id === orderId);
+    const orders = storage.getOrders();
+    const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) throw new Error('Order not found');
     
-    mockOrders.splice(orderIndex, 1);
+    orders.splice(orderIndex, 1);
+    storage.setOrders(orders);
   }
 };
 
-// 认证服务
+// 用户认证服务
 export const mockAuthService = {
   async login(credentials: LoginCredentials): Promise<User> {
     await simulateDelay(800);
-    
-    const user = mockUsers.find(u => 
-      (u.username === credentials.username || u.email === credentials.username) &&
-      u.password === credentials.password
+    const users = storage.getUsers();
+    const user = users.find(u => 
+      (u.username === credentials.username || u.email === credentials.username) && 
+      u.password === credentials.password &&
+      u.isActive
     );
     
-    if (!user || !user.isActive) {
+    if (!user) {
       throw new Error('用户名或密码错误');
     }
-    
-    // 更新最后登录时间
-    user.lastLoginAt = new Date();
-    
+
     // 返回用户信息（不包含密码）
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   },
 
   async register(userData: RegisterData): Promise<User> {
-    await simulateDelay(1000);
+    await simulateDelay(600);
+    const users = storage.getUsers();
     
-    // 检查用户名和邮箱是否已存在
-    const existingUser = mockUsers.find(u => 
+    // 检查用户名是否已存在
+    const existingUser = users.find(u => 
       u.username === userData.username || u.email === userData.email
     );
     
     if (existingUser) {
       throw new Error('用户名或邮箱已存在');
     }
-    
+
     const newUser: User = {
       id: generateId(),
       username: userData.username,
@@ -383,50 +493,57 @@ export const mockAuthService = {
       role: 'customer',
       profile: {
         name: userData.name,
-        company: userData.company,
-        phone: userData.contact
+        company: userData.company || '',
+        phone: userData.contact,
+        address: ''
       },
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
-    mockUsers.push(newUser);
-    
+
+    users.push(newUser);
+    storage.setUsers(users);
+
     // 返回用户信息（不包含密码）
     const { password, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
   },
 
   async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
-    await simulateDelay(500);
+    await simulateDelay(400);
+    const users = storage.getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
     
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex === -1) throw new Error('User not found');
-    
-    const existingUser = mockUsers[userIndex];
-    if (!existingUser) throw new Error('User not found');
-    
-    mockUsers[userIndex] = { 
-      ...existingUser, 
-      ...updates, 
-      updatedAt: new Date() 
+    if (userIndex === -1) {
+      throw new Error('用户不存在');
+    }
+
+    const existingUser = users[userIndex]!;
+    users[userIndex] = {
+      ...existingUser,
+      ...updates,
+      updatedAt: new Date()
     };
-    
-    // 返回用户信息（不包含密码）
-    const updatedUser = mockUsers[userIndex]!;
-    const { password, ...userWithoutPassword } = updatedUser;
+
+    storage.setUsers(users);
+
+    // 返回更新后的用户信息（不包含密码）
+    const { password, ...userWithoutPassword } = users[userIndex]!;
     return userWithoutPassword;
   },
 
   async validateToken(userId: string): Promise<boolean> {
     await simulateDelay(200);
-    return mockUsers.some(u => u.id === userId && u.isActive);
+    const users = storage.getUsers();
+    const user = users.find(u => u.id === userId && u.isActive);
+    return !!user;
   },
 
   async getAllCustomers(): Promise<User[]> {
     await simulateDelay(400);
-    return mockUsers
+    const users = storage.getUsers();
+    return users
       .filter(u => u.role === 'customer' && u.isActive)
       .map(({ password, ...userWithoutPassword }) => userWithoutPassword);
   }
