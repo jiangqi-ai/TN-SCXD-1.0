@@ -82,10 +82,13 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           selectedColor: item.selectedColor,
           unitPrice: item.unitPrice,
+          discount: 0, // 默认无折扣，管理员可在审核时调整
         })),
         shippingAddress: data.shippingAddress,
         paymentMethod: data.paymentMethod,
         totalAmount: getTotalAmount(),
+        originalAmount: getTotalAmount(), // 原价等于总价
+        discountAmount: 0, // 默认无折扣
       }
 
       const order = await mockOrderService.create(orderData)

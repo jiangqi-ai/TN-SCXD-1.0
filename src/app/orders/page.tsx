@@ -8,14 +8,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Package, FileText, Calendar, Eye, ArrowLeft, Trash2 } from 'lucide-react';
+import { 
+  Search, 
+  Package, 
+  FileText, 
+  Calendar, 
+  Eye, 
+  ArrowLeft, 
+  Trash2, 
+  Download, 
+  FileSpreadsheet, 
+  Printer,
+  MoreHorizontal
+} from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockOrderService } from '@/lib/services/mockDataService';
 import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
+import { exportOrdersToExcel, exportOrdersToPDF, generatePrintableOrdersHTML } from '@/lib/utils/exportUtils';
 import type { Order } from '@/types';
 import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
+import { useReactToPrint } from 'react-to-print';
+import { useRef } from 'react';
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -26,6 +42,8 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -84,6 +102,64 @@ export default function OrdersPage() {
       setDeletingOrderId(null);
     }
   };
+
+  // 导出Excel
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      exportOrdersToExcel(filteredOrders, {
+        format: 'excel',
+        includeItems: true,
+        includeCustomerInfo: true
+      });
+      toast.success('Excel文件已导出');
+    } catch (error) {
+      console.error('Export Excel failed:', error);
+      toast.error('导出Excel失败');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 导出PDF
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportOrdersToPDF(filteredOrders, {
+        format: 'pdf',
+        includeItems: true,
+        includeCustomerInfo: true
+      });
+      toast.success('PDF文件已导出');
+    } catch (error) {
+      console.error('Export PDF failed:', error);
+      toast.error('导出PDF失败');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 打印配置
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `订单列表_${formatDate(new Date(), 'short')}`,
+    print: async (printIframe: HTMLIFrameElement) => {
+      const document = printIframe.contentDocument;
+      if (document) {
+        // 添加自定义样式
+        const style = document.createElement('style');
+        style.textContent = `
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      // 调用默认打印行为
+      printIframe.contentWindow?.print();
+    },
+  });
 
   const OrderCard = ({ order }: { order: Order }) => (
     <Card className="hover:shadow-lg transition-shadow">
@@ -249,9 +325,66 @@ export default function OrdersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* 导出功能 */}
+              {filteredOrders.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrint}
+                    disabled={isExporting}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    打印
+                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={isExporting}>
+                        {isExporting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            导出中...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            导出
+                            <MoreHorizontal className="h-4 w-4 ml-1" />
+                          </>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleExportExcel}>
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        导出为Excel
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportPDF}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        导出为PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* 隐藏的打印内容 */}
+        <div style={{ display: 'none' }}>
+          <div ref={printRef}>
+            <div dangerouslySetInnerHTML={{ 
+              __html: generatePrintableOrdersHTML(filteredOrders, {
+                format: 'pdf',
+                includeItems: true,
+                includeCustomerInfo: true
+              })
+            }} />
+          </div>
+        </div>
 
         {/* 订单列表 */}
         {isLoading ? (

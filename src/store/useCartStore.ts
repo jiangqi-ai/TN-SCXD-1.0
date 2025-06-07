@@ -50,6 +50,9 @@ export const useCartStore = create<CartState>()(
             subtotal: product.unitPrice * quantity,
             image: product.image,
             minimumOrderQty: product.minimumOrderQty,
+            // 新增字段
+            discount: 0, // 默认无折扣
+            discountedPrice: product.unitPrice, // 默认原价
           };
 
           set(state => ({

@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   Package, 
@@ -31,12 +32,19 @@ import {
   Truck,
   Bell,
   Trash2,
-  Shield
+  Shield,
+  Download,
+  FileSpreadsheet,
+  Printer,
+  FilePlus,
+  MoreHorizontal
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { mockOrderService, mockAuthService } from '@/lib/services/mockDataService';
+import { mockOrderService, mockAuthService, mockProductService } from '@/lib/services/mockDataService';
 import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
-import type { Order, User } from '@/types';
+import { exportOrdersToExcel, exportOrdersToPDF } from '@/lib/utils/exportUtils';
+import { generateContractFromOrder, exportContractToPDF } from '@/lib/utils/contractUtils';
+import type { Order, User, Contract, Product, CustomerType } from '@/types';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -44,7 +52,9 @@ export default function AdminPage() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -76,7 +86,8 @@ export default function AdminPage() {
     email: '',
     company: '',
     phone: '',
-    address: ''
+    address: '',
+    customerType: '' as '' | CustomerType
   });
   const [userData, setUserData] = useState({
     name: '',
@@ -95,6 +106,20 @@ export default function AdminPage() {
     role: 'customer' as 'admin' | 'customer'
   });
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [generatingContract, setGeneratingContract] = useState<string | null>(null);
+
+  // 新增状态：合同相关
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
+  const [contractData, setContractData] = useState<{
+    orderId: string;
+    terms: string;
+    deliveryDate: string;
+  }>({
+    orderId: '',
+    terms: '',
+    deliveryDate: ''
+  });
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'admin') {
@@ -105,13 +130,15 @@ export default function AdminPage() {
 
     const loadData = async () => {
       try {
-        const [ordersData, customersData] = await Promise.all([
+        const [ordersData, customersData, productsData] = await Promise.all([
           mockOrderService.getAll(),
           mockAuthService.getAllCustomers(),
+          mockProductService.getAllForAdmin(),
         ]);
 
         setOrders(ordersData);
         setCustomers(customersData);
+        setProducts(productsData);
 
         // 计算统计数据
         const totalRevenue = ordersData
@@ -191,6 +218,136 @@ export default function AdminPage() {
     toast.success('已退出登录');
   };
 
+  // 导出订单Excel
+  const handleExportOrdersExcel = async () => {
+    try {
+      setIsExporting(true);
+      exportOrdersToExcel(orders, {
+        format: 'excel',
+        includeItems: true,
+        includeCustomerInfo: true
+      });
+      toast.success('订单Excel文件已导出');
+    } catch (error) {
+      console.error('Export orders Excel failed:', error);
+      toast.error('导出订单Excel失败');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 导出订单PDF
+  const handleExportOrdersPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportOrdersToPDF(orders, {
+        format: 'pdf',
+        includeItems: true,
+        includeCustomerInfo: true
+      });
+      toast.success('订单PDF文件已导出');
+    } catch (error) {
+      console.error('Export orders PDF failed:', error);
+      toast.error('导出订单PDF失败');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 生成合同
+  const handleGenerateContract = (order: Order) => {
+    const defaultDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '';
+    const deliveryDate: string = order.deliveryDate ? (order.deliveryDate.toISOString().split('T')[0] || '') : defaultDate;
+    
+    // 根据订单内容自动生成合同条款
+    const autoGeneratedTerms = generateContractTermsFromOrder(order);
+    
+    setContractData({
+      orderId: order.id,
+      terms: autoGeneratedTerms,
+      deliveryDate: deliveryDate
+    });
+    setIsContractDialogOpen(true);
+  };
+
+  // 根据订单内容自动生成合同条款
+  const generateContractTermsFromOrder = (order: Order): string => {
+    const itemsDetails = order.items.map(item => 
+      `- ${item.productCode} (${item.productName || '产品'}) ${item.selectedDimension} ${item.selectedColor} × ${item.quantity}件`
+    ).join('\n');
+
+    const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalWeight = order.items.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
+
+    return `
+1. 产品详情：
+${itemsDetails}
+   总数量：${totalQuantity}件
+   总重量：约${totalWeight.toFixed(1)}kg
+
+2. 交货条款：
+   - 交货方式：送货上门
+   - 交货时间：签订合同后15个工作日内
+   - 交货地点：${order.customerInfo.deliveryAddress}
+   - 收货人：${order.customerInfo.name}
+   - 联系电话：${order.customerInfo.contact}
+
+3. 质量标准：
+   - 产品符合国家相关质量标准
+   - 提供质量检验报告
+   - 质保期12个月
+
+4. 付款条款：
+   - 付款方式：对账单确认后付款
+   - 付款期限：收到货物并验收合格后30天内
+
+5. 特殊要求：
+   ${order.customerInfo.specialRequirements || '无特殊要求'}
+
+6. 违约责任：
+   - 逾期交货：每延期一天，按合同总价的0.5%支付违约金
+   - 质量问题：免费更换或退货
+
+7. 其他条款：
+   - 本合同一式两份，双方各执一份
+   - 如有争议，通过友好协商解决
+   - 合同自双方签字盖章之日起生效
+   
+8. 生产备注：
+   ${order.productionNotes || '无特殊生产要求'}
+`;
+  };
+
+  // 保存合同
+  const handleSaveContract = async () => {
+    try {
+      setGeneratingContract(contractData.orderId);
+      
+      const order = orders.find(o => o.id === contractData.orderId);
+      if (!order) {
+        toast.error('订单不存在');
+        return;
+      }
+
+      const contract = generateContractFromOrder(order, user!.id, contractData.terms);
+      if (contractData.deliveryDate) {
+        contract.deliveryDate = new Date(contractData.deliveryDate);
+      }
+
+      // 导出合同PDF
+      await exportContractToPDF(contract);
+      
+      toast.success('合同已生成并下载');
+      setIsContractDialogOpen(false);
+      setContractData({ orderId: '', terms: '', deliveryDate: '' });
+    } catch (error) {
+      console.error('Generate contract failed:', error);
+      toast.error('生成合同失败');
+    } finally {
+      setGeneratingContract(null);
+    }
+  };
+
   const handleEditAdmin = () => {
     if (user) {
       setEditingAdmin(user);
@@ -246,7 +403,8 @@ export default function AdminPage() {
       email: customer.email,
       company: customer.profile.company || '',
       phone: customer.profile.phone || '',
-      address: customer.profile.address || ''
+      address: customer.profile.address || '',
+      customerType: customer.customerType || ''
     });
     setIsCustomerDialogOpen(true);
   };
@@ -262,7 +420,8 @@ export default function AdminPage() {
           company: customerData.company,
           phone: customerData.phone,
           address: customerData.address
-        }
+        },
+        customerType: customerData.customerType || undefined
       };
 
       await mockAuthService.updateProfile(editingCustomer.id, updateData);
@@ -377,6 +536,21 @@ export default function AdminPage() {
       toast.error('删除订单失败');
     } finally {
       setDeletingOrderId(null);
+    }
+  };
+
+  // 切换产品启用/禁用状态
+  const handleToggleProductStatus = async (productId: string, currentStatus: boolean) => {
+    try {
+      setTogglingProductId(productId);
+      const updatedProduct = await mockProductService.update(productId, { isActive: !currentStatus });
+      setProducts(products.map(p => p.id === productId ? updatedProduct : p));
+      toast.success(currentStatus ? '产品已禁用' : '产品已启用');
+    } catch (error) {
+      console.error('Failed to toggle product status:', error);
+      toast.error('操作失败，请重试');
+    } finally {
+      setTogglingProductId(null);
     }
   };
 
@@ -542,11 +716,43 @@ export default function AdminPage() {
           <TabsContent value="orders">
             <Card>
               <CardHeader>
-                <CardTitle>订单管理</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>订单管理</CardTitle>
+                  <div className="flex gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
+                          {isExporting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              导出中...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              导出订单
+                              <MoreHorizontal className="h-4 w-4 ml-1" />
+                            </>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleExportOrdersExcel}>
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          导出为Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleExportOrdersPDF}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          导出为PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {orders.slice(0, 10).map(order => (
+                  {(orders || []).slice(0, 10).map(order => (
                     <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-4">
@@ -576,7 +782,7 @@ export default function AdminPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">
-                          {order.items.length} 个商品 | {formatPrice(order.totalAmount)} | 对账单确认
+                          {(order.items || []).length} 个商品 | {formatPrice(order.totalAmount)} | 对账单确认
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -643,6 +849,28 @@ export default function AdminPage() {
                             查看详情
                           </Button>
                         </Link>
+                        
+                        {/* 生成合同按钮 */}
+                        {(order.status === 'confirmed' || order.status === 'production' || order.status === 'completed') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateContract(order)}
+                            disabled={generatingContract === order.id}
+                          >
+                            {generatingContract === order.id ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
+                                生成中...
+                              </>
+                            ) : (
+                              <>
+                                <FilePlus className="h-4 w-4 mr-1" />
+                                生成合同
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {(order.status === 'pending' || order.status === 'cancelled') && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -695,31 +923,83 @@ export default function AdminPage() {
                     <Link href="/admin/products/edit">
                       <Button variant="outline">
                         <Edit className="h-4 w-4 mr-2" />
-                        编辑产品
+                        详细编辑
                       </Button>
                     </Link>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">产品管理功能</p>
-                  <div className="space-x-2">
+                {(!products || products.length === 0) ? (
+                  <div className="text-center py-8">
+                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">暂无产品数据</p>
                     <Link href="/admin/products/upload">
                       <Button>
                         <Upload className="h-4 w-4 mr-2" />
-                        Excel批量上传
-                      </Button>
-                    </Link>
-                    <Link href="/admin/products/edit">
-                      <Button variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        编辑现有产品
+                        上传产品
                       </Button>
                     </Link>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {(products || []).map(product => (
+                      <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                            {product.image ? (
+                              <img 
+                                src={product.image} 
+                                alt={product.productCode}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <Package className="h-8 w-8 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{product.productCode}</p>
+                            <p className="text-sm text-gray-600">
+                              {product.category} - {product.subCategory}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              价格: {formatPrice(product.unitPrice)} | 起订: {product.minimumOrderQty}件
+                            </p>
+                            <div className="flex gap-1 mt-1">
+                              {(product.targetCustomers || []).map(type => (
+                                <Badge key={type} variant="outline" className="text-xs">
+                                  {type}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                            {product.isActive ? '启用' : '禁用'}
+                          </Badge>
+                          <Button
+                            variant={product.isActive ? 'outline' : 'default'}
+                            size="sm"
+                            onClick={() => handleToggleProductStatus(product.id, product.isActive)}
+                            disabled={togglingProductId === product.id}
+                          >
+                            {togglingProductId === product.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            ) : null}
+                            {product.isActive ? '禁用' : '启用'}
+                          </Button>
+                          <Link href={`/admin/products/edit`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              编辑
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -749,16 +1029,23 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {customers.map(customer => (
+                  {(customers || []).map(customer => (
                     <div key={customer.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-medium">{customer.profile.name}</p>
                         <p className="text-sm text-gray-600">
                           {customer.email} | {customer.profile.company || '个人客户'}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          注册时间: {customer.createdAt ? formatDate(customer.createdAt, 'short') : '未知'}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-gray-600">
+                            注册时间: {customer.createdAt ? formatDate(customer.createdAt, 'short') : '未知'}
+                          </p>
+                          {customer.customerType && (
+                            <Badge variant="outline" className="text-xs">
+                              {customer.customerType}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={customer.isActive ? 'default' : 'secondary'}>
@@ -807,7 +1094,7 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[user, ...customers.slice(0, 5)]
+                  {[user, ...(customers || []).slice(0, 5)]
                     .filter(userItem => userItem && userItem.createdAt) // 过滤掉无效的用户数据
                     .map(userItem => (
                     <div key={userItem.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -1132,6 +1419,20 @@ export default function AdminPage() {
                     onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="customerType">客户类型</Label>
+                  <Select value={customerData.customerType} onValueChange={(value) => setCustomerData({...customerData, customerType: value as CustomerType})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择客户类型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                                                  <SelectItem value="未分类">未分类</SelectItem>
+                            <SelectItem value="OEM客户">OEM客户</SelectItem>
+                            <SelectItem value="品牌客户">品牌客户</SelectItem>
+                            <SelectItem value="工程客户">工程客户</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-2">
@@ -1293,6 +1594,42 @@ export default function AdminPage() {
               </Button>
               <Button onClick={handleAddUser}>
                 保存
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 生成合同对话框 */}
+      <Dialog open={isContractDialogOpen} onOpenChange={setIsContractDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>生成合同</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contractTerms">合同条款</Label>
+              <Textarea
+                id="contractTerms"
+                value={contractData.terms}
+                onChange={(e) => setContractData({...contractData, terms: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="contractDeliveryDate">预计交货日期</Label>
+              <Input
+                id="contractDeliveryDate"
+                type="date"
+                value={contractData.deliveryDate}
+                onChange={(e) => setContractData({...contractData, deliveryDate: e.target.value})}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsContractDialogOpen(false)}>
+                取消
+              </Button>
+              <Button onClick={handleSaveContract}>
+                生成合同
               </Button>
             </div>
           </div>

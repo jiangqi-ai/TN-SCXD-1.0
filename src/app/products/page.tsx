@@ -17,18 +17,21 @@ import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
 
 export default function ProductsPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { addItem } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await mockProductService.getAll();
+        // 如果用户已登录且有客户类型，只获取对应的产品
+        const customerType = user?.customerType;
+        const data = await mockProductService.getAll(customerType);
         setProducts(data);
       } catch (error) {
         console.error('Failed to load products:', error);
@@ -39,7 +42,7 @@ export default function ProductsPage() {
     };
 
     loadProducts();
-  }, []);
+  }, [user?.customerType]);
 
   // 获取所有可用颜色
   const allColors = useMemo(() => {
@@ -67,9 +70,12 @@ export default function ProductsPage() {
       // 价格筛选
       const matchesPrice = product.unitPrice >= priceRange[0] && product.unitPrice <= priceRange[1];
 
-      return matchesSearch && matchesColor && matchesPrice;
+      // 分类筛选
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+
+      return matchesSearch && matchesColor && matchesPrice && matchesCategory;
     });
-  }, [products, searchTerm, selectedColors, priceRange]);
+  }, [products, searchTerm, selectedColors, priceRange, selectedCategory]);
 
   const handleColorFilter = (color: string) => {
     setSelectedColors(prev => 
@@ -83,6 +89,7 @@ export default function ProductsPage() {
     setSearchTerm('');
     setSelectedColors([]);
     setPriceRange([0, 5000]);
+    setSelectedCategory('all');
   };
 
   const ProductCard = ({ product }: { product: Product }) => {
@@ -260,6 +267,62 @@ export default function ProductsPage() {
           <p className="text-sm sm:text-base text-gray-600">
             浏览我们的攀岩产品，选择适合您需求的配套解决方案
           </p>
+        </div>
+
+        {/* 分类菜单栏 */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              全部产品
+            </button>
+            <button
+              onClick={() => setSelectedCategory('攀岩板材')}
+              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                selectedCategory === '攀岩板材'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              攀岩板材
+            </button>
+            <button
+              onClick={() => setSelectedCategory('岩点')}
+              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                selectedCategory === '岩点'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              岩点
+            </button>
+            <button
+              onClick={() => setSelectedCategory('五金配件')}
+              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                selectedCategory === '五金配件'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              五金配件
+            </button>
+            <button
+              onClick={() => setSelectedCategory('复合板')}
+              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+                selectedCategory === '复合板'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              复合板
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">

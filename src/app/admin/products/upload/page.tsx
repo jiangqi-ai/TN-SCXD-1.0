@@ -12,7 +12,16 @@ import { ArrowLeft, Upload, Download, FileText, CheckCircle, XCircle, AlertCircl
 import { useAuthStore } from '@/store/useAuthStore';
 import { mockProductService } from '@/lib/services/mockDataService';
 import { parseColors, validateNumber, validateProductCode, generateId } from '@/lib/utils/helpers';
-import type { Product, ExcelProductRow } from '@/types';
+import { 
+  PRODUCT_CATEGORIES, 
+  CUSTOMER_TYPES, 
+  getSubCategories, 
+  isValidCategory, 
+  isValidSubCategory, 
+  isValidCustomerType,
+  getDefaultDiscountRange 
+} from '@/lib/constants/productCategories';
+import type { Product, ExcelProductRow, ProductCategory, ProductSubCategory, CustomerType } from '@/types';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
@@ -43,6 +52,9 @@ export default function ProductUploadPage() {
     const templateData = [
       {
         '产品编号': 'BOX-001',
+        '主分类': '攀岩板材',
+        '子分类': '高密度攀岩板',
+        '目标客户': 'OEM,品牌客户',
         '图片': '',
         '可选尺寸': '20cm x 15cm x 10cm, 30cm x 30cm x 5cm',
         '重量': 0.8,
@@ -50,6 +62,8 @@ export default function ProductUploadPage() {
         '订单数量': 10,
         '颜色': '白色, 牛皮色, 黑色',
         '销售价格（不含运，不含税）': 85.00,
+        '可打折': '是',
+        '最大折扣(%)': 15,
         '备注': '示例产品说明'
       }
     ];
@@ -104,6 +118,59 @@ export default function ProductUploadPage() {
 
         jsonData.forEach((row, index) => {
           try {
+            // 验证主分类
+            const categoryStr = (row as any)['主分类'] || '';
+            if (!categoryStr) {
+              throw new Error(`第 ${index + 2} 行主分类不能为空`);
+            }
+            if (!isValidCategory(categoryStr)) {
+              throw new Error(`第 ${index + 2} 行主分类"${categoryStr}"无效。有效值：${PRODUCT_CATEGORIES.join(', ')}`);
+            }
+            const category = categoryStr as ProductCategory;
+
+            // 验证子分类（如果有子分类的话）
+            const subCategoryStr = (row as any)['子分类'] || '';
+            let subCategory: ProductSubCategory | undefined;
+            if (subCategoryStr) {
+              const validSubCategories = getSubCategories(category);
+              if (validSubCategories.length > 0 && !isValidSubCategory(category, subCategoryStr)) {
+                throw new Error(`第 ${index + 2} 行子分类"${subCategoryStr}"无效。有效值：${validSubCategories.join(', ')}`);
+              }
+              subCategory = subCategoryStr as ProductSubCategory;
+            }
+
+            // 验证目标客户
+            const targetCustomersStr = (row as any)['目标客户'] || '';
+            const targetCustomers: CustomerType[] = [];
+            if (targetCustomersStr) {
+              const customerList = targetCustomersStr.split(',').map((c: string) => c.trim());
+              for (const customerType of customerList) {
+                if (!isValidCustomerType(customerType)) {
+                  throw new Error(`第 ${index + 2} 行目标客户"${customerType}"无效。有效值：${CUSTOMER_TYPES.join(', ')}`);
+                }
+                targetCustomers.push(customerType as CustomerType);
+              }
+            }
+
+            // 验证折扣设置
+            const discountableStr = (row as any)['可打折'] || '';
+            const discountable = discountableStr === '是' || discountableStr === 'true' || discountableStr === '1';
+            
+            let maxDiscount = 0;
+            if (discountable) {
+              const maxDiscountStr = (row as any)['最大折扣(%)'] || '';
+              if (maxDiscountStr) {
+                maxDiscount = validateNumber(maxDiscountStr, '最大折扣', index);
+                if (maxDiscount < 0 || maxDiscount > 100) {
+                  throw new Error(`第 ${index + 2} 行最大折扣必须在0-100之间`);
+                }
+              } else {
+                // 使用默认折扣范围
+                const defaultRange = getDefaultDiscountRange(category);
+                maxDiscount = defaultRange.max;
+              }
+            }
+
             const availableDimensions = parseColors((row as any)['可选尺寸'] || '');
             const product: Product = {
               id: generateId(),
@@ -120,7 +187,13 @@ export default function ProductUploadPage() {
               applications: '',
               isActive: true,
               createdAt: new Date(),
-              updatedAt: new Date()
+              updatedAt: new Date(),
+              // 新增字段
+              category,
+              subCategory: subCategory!,
+              targetCustomers,
+              discountable,
+              maxDiscount
             };
 
             // 验证必填字段
@@ -129,6 +202,9 @@ export default function ProductUploadPage() {
             }
             if (product.availableColors.length === 0) {
               throw new Error(`第 ${index + 2} 行颜色不能为空`);
+            }
+            if (product.targetCustomers.length === 0) {
+              throw new Error(`第 ${index + 2} 行目标客户不能为空`);
             }
 
             products.push(product);
@@ -325,18 +401,44 @@ export default function ProductUploadPage() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-2">产品编号</th>
+                      <th className="text-left p-2">分类</th>
+                      <th className="text-left p-2">目标客户</th>
                       <th className="text-left p-2">尺寸</th>
                       <th className="text-left p-2">重量</th>
                       <th className="text-left p-2">个数</th>
                       <th className="text-left p-2">起订量</th>
                       <th className="text-left p-2">颜色</th>
                       <th className="text-left p-2">价格</th>
+                      <th className="text-left p-2">折扣</th>
                     </tr>
                   </thead>
                   <tbody>
                     {parsedData.slice(0, 10).map((product, index) => (
                       <tr key={index} className="border-b">
                         <td className="p-2">{product.productCode}</td>
+                        <td className="p-2">
+                          <div>
+                            <Badge variant="outline" className="text-xs mb-1">
+                              {product.category}
+                            </Badge>
+                            {product.subCategory && (
+                              <div>
+                                <Badge variant="secondary" className="text-xs">
+                                  {product.subCategory}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-2">
+                          <div className="flex flex-wrap gap-1">
+                            {product.targetCustomers.map(customer => (
+                              <Badge key={customer} variant="outline" className="text-xs">
+                                {customer}
+                              </Badge>
+                            ))}
+                          </div>
+                        </td>
                         <td className="p-2">{product.availableDimensions}</td>
                         <td className="p-2">{product.weight}kg</td>
                         <td className="p-2">{product.pieceCount}</td>
@@ -351,6 +453,17 @@ export default function ProductUploadPage() {
                           </div>
                         </td>
                         <td className="p-2">¥{product.unitPrice}</td>
+                        <td className="p-2">
+                          {product.discountable ? (
+                            <Badge variant="default" className="text-xs">
+                              最高{product.maxDiscount}%
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              不可打折
+                            </Badge>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

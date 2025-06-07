@@ -5,7 +5,8 @@ import type {
   OrderItem,
   CreateOrderRequest, 
   LoginCredentials, 
-  RegisterData 
+  RegisterData,
+  CustomerType
 } from '@/types';
 import { generateId, generateOrderId } from "@/lib/utils/helpers";
 import { securityService } from './securityService';
@@ -38,7 +39,12 @@ const initialProducts: Product[] = [
     applications: '适用于室内攀岩馆、户外天然岩壁、人工攀岩墙等各种攀岩场景。无论是初学者还是专业攀岩者，都能找到适合的规格和配置。',
     isActive: true,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
+    category: '岩点',
+    subCategory: '玻璃钢境面',
+    targetCustomers: ['OEM客户', '品牌客户'],
+    discountable: true,
+    maxDiscount: 15
   },
   {
     id: '2',
@@ -55,7 +61,12 @@ const initialProducts: Product[] = [
     applications: '主要用于初学者攀岩训练，适合攀岩馆的儿童区域和初级线路设置。',
     isActive: true,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
+    category: '攀岩板材',
+    subCategory: '常规攀岩板',
+    targetCustomers: ['工程客户'],
+    discountable: true,
+    maxDiscount: 12
   },
   {
     id: '3',
@@ -72,7 +83,12 @@ const initialProducts: Product[] = [
     applications: '专为高难度攀岩线路设计，适用于竞赛级攀岩墙和专业训练场所。',
     isActive: true,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
+    category: '岩点',
+    subCategory: 'PU点',
+    targetCustomers: ['品牌客户', '工程客户'],
+    discountable: false,
+    maxDiscount: 0
   },
   {
     id: '4',
@@ -89,7 +105,12 @@ const initialProducts: Product[] = [
     applications: '用于创建具有挑战性的攀岩路线，适合高级攀岩者和竞赛使用。',
     isActive: true,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
+    category: '五金配件',
+    subCategory: '固定件',
+    targetCustomers: ['OEM客户'],
+    discountable: true,
+    maxDiscount: 8
   },
   {
     id: '5',
@@ -106,7 +127,12 @@ const initialProducts: Product[] = [
     applications: '主要用于技巧训练和热身练习，适合各个水平的攀岩者进行基础动作练习。',
     isActive: true,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
+    category: '攀岩板材',
+    subCategory: '高密度攀岩板',
+    targetCustomers: ['OEM客户', '品牌客户', '工程客户'],
+    discountable: true,
+    maxDiscount: 20
   }
 ];
 
@@ -269,13 +295,20 @@ const simulateDelay = (ms: number): Promise<void> => {
 
 // 产品服务
 export const mockProductService = {
-  async getAll(): Promise<Product[]> {
+  async getAll(customerType?: CustomerType): Promise<Product[]> {
     await simulateDelay(500);
     const products = storage.getProducts();
     // 过滤激活产品并按创建时间降序排序（新产品在前）
-    return products
-      .filter(p => p.isActive)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    let filteredProducts = products.filter(p => p.isActive);
+    
+    // 如果指定了客户类型，只返回目标客户包含该类型的产品
+    if (customerType) {
+      filteredProducts = filteredProducts.filter(p => 
+        p.targetCustomers.includes(customerType)
+      );
+    }
+    
+    return filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   // 管理员专用：获取所有产品（包括禁用的）
@@ -358,6 +391,11 @@ export const mockOrderService = {
     for (const item of orderData.items) {
       const product = products.find(p => p.id === item.productId);
       if (product) {
+        const subtotal = item.unitPrice * item.quantity;
+        const discount = item.discount || 0;
+        const originalPrice = item.unitPrice;
+        const discountedPrice = originalPrice * (1 - discount / 100);
+        
         orderItems.push({
           productId: item.productId,
           productCode: product.productCode,
@@ -369,7 +407,13 @@ export const mockOrderService = {
           selectedColor: item.selectedColor,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          subtotal: item.unitPrice * item.quantity,
+          subtotal: subtotal,
+          // 新增字段
+          discount: discount,
+          originalPrice: originalPrice,
+          discountedPrice: discountedPrice,
+          discountable: product.discountable,
+          maxDiscount: product.maxDiscount,
         });
       }
     }
@@ -392,7 +436,10 @@ export const mockOrderService = {
       orderDate: new Date(),
       paymentMethod: 'bill_confirm',
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      // 新增字段
+      originalAmount: orderData.originalAmount || orderData.totalAmount,
+      discountAmount: orderData.discountAmount || 0,
     };
     
     orders.unshift(newOrder);
