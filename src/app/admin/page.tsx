@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { mockAuthService, mockOrderService } from '@/lib/services/mockDataService';
 import { productService } from '@/lib/services/productService';
 import { exportContractToPDF, generateContractFromOrder } from '@/lib/utils/contractUtils';
-import { exportOrdersToExcel, exportOrdersToPDF } from '@/lib/utils/exportUtils';
+import { exportOrdersToExcel, exportOrdersToPDF, generatePrintableOrdersHTML } from '@/lib/utils/exportUtils';
+import { useReactToPrint } from 'react-to-print';
 import { formatDate, formatPrice, getOrderStatusColor, getOrderStatusText } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Contract, CustomerType, Order, Product, User } from '@/types';
@@ -47,7 +48,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -109,8 +110,10 @@ export default function AdminPage() {
     role: 'customer' as 'admin' | 'customer'
   });
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [generatingContract, setGeneratingContract] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   // 新增状态：合同相关
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
@@ -156,7 +159,8 @@ export default function AdminPage() {
         });
       } catch (error) {
         console.error('Failed to load admin data:', error);
-        toast.error('加载数据失败');
+        const message = error instanceof Error ? error.message : '加载数据失败';
+        toast.error(message);
       } finally {
         setIsLoading(false);
       }
@@ -256,6 +260,29 @@ export default function AdminPage() {
       setIsExporting(false);
     }
   };
+
+  // 打印订单
+  const handlePrintOrders = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `订单管理_${formatDate(new Date(), 'short')}`,
+    print: async (printIframe: HTMLIFrameElement) => {
+      const document = printIframe.contentDocument;
+      if (document) {
+        // 添加自定义样式
+        const style = document.createElement('style');
+        style.textContent = `
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      // 调用默认打印行为
+      printIframe.contentWindow?.print();
+    },
+  });
 
   // 生成合同
   const handleGenerateContract = (order: Order) => {
@@ -489,21 +516,39 @@ ${itemsDetails}
   };
 
   const handleAddUser = async () => {
-    try {
-      await mockAuthService.register({
-        username: newUserData.username,
-        email: newUserData.email,
-        password: newUserData.password,
-        name: newUserData.name,
-        company: newUserData.company,
-        contact: newUserData.phone
-      });
+    // 验证必填字段
+    if (!newUserData.username.trim() || !newUserData.email.trim() || !newUserData.password.trim() || !newUserData.name.trim()) {
+      toast.error('请填写所有必填字段');
+      return;
+    }
 
-      // 如果是管理员，需要手动更新角色
+    if (!user?.id) {
+      toast.error('无权限执行此操作');
+      return;
+    }
+
+    try {
       if (newUserData.role === 'admin') {
-        // 这里应该有专门的API来设置管理员，暂时直接在mock数据中处理
+        // 创建管理员用户
+        await mockAuthService.createAdminUser(user.id, {
+          username: newUserData.username,
+          email: newUserData.email,
+          password: newUserData.password,
+          name: newUserData.name,
+          company: newUserData.company,
+          contact: newUserData.phone
+        });
         toast.success('管理员用户创建成功');
       } else {
+        // 创建普通客户用户
+        await mockAuthService.register({
+          username: newUserData.username,
+          email: newUserData.email,
+          password: newUserData.password,
+          name: newUserData.name,
+          company: newUserData.company,
+          contact: newUserData.phone
+        });
         toast.success('用户创建成功');
       }
 
@@ -521,8 +566,57 @@ ${itemsDetails}
         phone: '',
         role: 'customer'
       });
-    } catch (error: any) {
-      toast.error(error.message || '创建用户失败');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '创建用户失败';
+      toast.error(message);
+    }
+  };
+
+  // 删除用户
+  const handleDeleteUser = async (userId: string) => {
+    if (!user?.id) {
+      toast.error('无权限执行此操作');
+      return;
+    }
+
+    try {
+      setDeletingUserId(userId);
+      await mockAuthService.deleteUser(user.id, userId);
+      
+      // 刷新用户列表
+      const updatedCustomers = await mockAuthService.getAllCustomers();
+      setCustomers(updatedCustomers);
+      
+      toast.success('用户已删除');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '删除用户失败';
+      toast.error(message);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  // 删除客户
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!user?.id) {
+      toast.error('无权限执行此操作');
+      return;
+    }
+
+    try {
+      setDeletingUserId(customerId);
+      await mockAuthService.deleteUser(user.id, customerId);
+      
+      // 刷新客户列表
+      const updatedCustomers = await mockAuthService.getAllCustomers();
+      setCustomers(updatedCustomers);
+      
+      toast.success('客户已删除');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '删除客户失败';
+      toast.error(message);
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -722,6 +816,15 @@ ${itemsDetails}
                 <div className="flex items-center justify-between">
                   <CardTitle>订单管理</CardTitle>
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrintOrders}
+                      disabled={orders.length === 0}
+                    >
+                      <Printer className="mr-2 h-4 w-4" />
+                      打印订单
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
@@ -1058,6 +1161,32 @@ ${itemsDetails}
                           <Edit className="mr-1 h-4 w-4" />
                           编辑
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              删除
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>确认删除客户</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                您确定要删除客户 {customer.profile.name} 吗？此操作不可撤销。
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>取消</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                                disabled={deletingUserId === customer.id}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {deletingUserId === customer.id ? '删除中...' : '确认删除'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   ))}
@@ -1114,16 +1243,37 @@ ${itemsDetails}
                         <Badge variant={userItem.role === 'admin' ? 'default' : 'secondary'}>
                           {userItem.role === 'admin' ? '管理员' : '普通用户'}
                         </Badge>
-                        {userItem.id === user?.id ? (
-                          <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
-                            <Edit className="mr-1 h-4 w-4" />
-                            编辑
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
-                            <Edit className="mr-1 h-4 w-4" />
-                            编辑
-                          </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
+                          <Edit className="mr-1 h-4 w-4" />
+                          编辑
+                        </Button>
+                        {userItem.id !== user?.id && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="mr-1 h-4 w-4" />
+                                删除
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>确认删除用户</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  您确定要删除用户 {userItem.profile.name} 吗？此操作不可撤销。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteUser(userItem.id)}
+                                  disabled={deletingUserId === userItem.id}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {deletingUserId === userItem.id ? '删除中...' : '确认删除'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </div>
@@ -1589,15 +1739,15 @@ ${itemsDetails}
             </div>
             <div>
               <Label htmlFor="newUserRole">角色</Label>
-              <select
-                id="newUserRole"
-                value={newUserData.role}
-                onChange={(e) => setNewUserData({...newUserData, role: e.target.value as 'admin' | 'customer'})}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="customer">普通用户</option>
-                <option value="admin">管理员</option>
-              </select>
+              <Select value={newUserData.role} onValueChange={(value) => setNewUserData({...newUserData, role: value as 'admin' | 'customer'})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="选择角色" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">普通用户</SelectItem>
+                  <SelectItem value="admin">管理员</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
@@ -1646,6 +1796,19 @@ ${itemsDetails}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* 隐藏的打印内容 */}
+      <div className="hidden">
+        <div ref={printRef}>
+          <div dangerouslySetInnerHTML={{ 
+            __html: generatePrintableOrdersHTML(orders, {
+              format: 'pdf',
+              includeItems: true,
+              includeCustomerInfo: true
+            })
+          }} />
+        </div>
+      </div>
     </div>
   );
 } 

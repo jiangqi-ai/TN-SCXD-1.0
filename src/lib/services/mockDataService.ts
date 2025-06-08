@@ -551,6 +551,96 @@ export const mockAuthService = {
       ...securityStats,
       sessionStats
     };
+  },
+
+  // 删除用户（管理员功能）
+  async deleteUser(adminUserId: string, targetUserId: string): Promise<void> {
+    await simulateDelay(100);
+    const users = storage.getUsers();
+    const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
+    
+    if (!admin) {
+      throw new Error('权限不足');
+    }
+
+    // 不能删除自己
+    if (adminUserId === targetUserId) {
+      throw new Error('不能删除自己的账户');
+    }
+
+    const targetUserIndex = users.findIndex(u => u.id === targetUserId);
+    if (targetUserIndex === -1) {
+      throw new Error('用户不存在');
+    }
+
+    // 强制下线用户
+    securityService.forceLogoutUser(targetUserId);
+    
+    // 删除用户
+    users.splice(targetUserIndex, 1);
+    storage.setUsers(users);
+  },
+
+  // 创建管理员用户（管理员功能）
+  async createAdminUser(adminUserId: string, userData: RegisterData): Promise<User> {
+    await simulateDelay(200);
+    const users = storage.getUsers();
+    const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
+    
+    if (!admin) {
+      throw new Error('权限不足');
+    }
+
+    // 检查用户名是否已存在
+    const existingUser = users.find(u => 
+      u.username === userData.username || u.email === userData.email
+    );
+    
+    if (existingUser) {
+      throw new Error('用户名或邮箱已存在');
+    }
+
+    const newUser: User = {
+      id: generateId(),
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      role: 'admin', // 直接设置为管理员角色
+      profile: {
+        name: userData.name,
+        company: userData.company || '',
+        phone: userData.contact,
+        address: ''
+      },
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    users.push(newUser);
+    storage.setUsers(users);
+
+    // 同步到云端 - 这里不需要同步用户数据到产品云端
+    // 用户数据暂时只存储在本地
+
+    // 返回用户信息（不包含密码）
+    const { password, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
+  },
+
+  // 获取所有用户（管理员功能）
+  async getAllUsers(adminUserId: string): Promise<User[]> {
+    await simulateDelay(100);
+    const users = storage.getUsers();
+    const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
+    
+    if (!admin) {
+      throw new Error('权限不足');
+    }
+
+    return users
+      .filter(u => u.isActive)
+      .map(({ password, ...userWithoutPassword }) => userWithoutPassword);
   }
 };
 
