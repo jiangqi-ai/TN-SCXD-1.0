@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Filter, ShoppingCart, ArrowLeft, Package, Minus, Plus } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
-import { mockProductService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
 import { formatPrice, debounce } from '@/lib/utils/helpers';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
@@ -31,7 +31,7 @@ export default function ProductsPage() {
       try {
         // 如果用户已登录且有客户类型，只获取对应的产品
         const customerType = user?.customerType;
-        const data = await mockProductService.getAll(customerType);
+        const data = await productService.getAll(customerType);
         setProducts(data);
       } catch (error) {
         console.error('Failed to load products:', error);

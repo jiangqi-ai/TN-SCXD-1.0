@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Edit, Trash2, Search, Package, Upload, ImageIcon } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { mockProductService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
 import { formatPrice } from '@/lib/utils/helpers';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
@@ -60,7 +60,7 @@ export default function ProductEditPage() {
 
     const loadProducts = async () => {
       try {
-        const data = await mockProductService.getAllForAdmin();
+        const data = await productService.getAllForAdmin();
         setProducts(data);
         setFilteredProducts(data);
       } catch (error) {
@@ -115,7 +115,7 @@ export default function ProductEditPage() {
     if (!editingProduct) return;
 
     try {
-      const updatedProduct = await mockProductService.update(editingProduct.id, editingProduct);
+              const updatedProduct = await productService.update(editingProduct.id, editingProduct);
       setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
       setIsDialogOpen(false);
       setEditingProduct(null);
@@ -130,7 +130,7 @@ export default function ProductEditPage() {
     if (!confirm('确定要删除这个产品吗？')) return;
 
     try {
-      await mockProductService.delete(productId);
+              await productService.delete(productId);
       setProducts(products.filter(p => p.id !== productId));
       toast.success('产品已删除');
     } catch (error) {

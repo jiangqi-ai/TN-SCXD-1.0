@@ -1,15 +1,14 @@
 import type { 
-  Product, 
   User, 
   Order, 
   OrderItem,
   CreateOrderRequest, 
   LoginCredentials, 
-  RegisterData,
-  CustomerType
+  RegisterData
 } from '@/types';
 import { generateId, generateOrderId } from "@/lib/utils/helpers";
 import { securityService } from './securityService';
+import { productService } from './productService';
 
 // 从环境变量获取默认密码
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
@@ -17,124 +16,16 @@ const DEFAULT_CUSTOMER_PASSWORD = process.env.DEFAULT_CUSTOMER_PASSWORD || 'cust
 
 // 存储键名
 const STORAGE_KEYS = {
-  PRODUCTS: 'tn-scxd-products',
   USERS: 'tn-scxd-users', 
-  ORDERS: 'tn-scxd-orders'
+  ORDERS: 'tn-scxd-orders',
+  // 数据版本控制
+  DATA_VERSION: 'tn-scxd-data-version',
+  LAST_SYNC: 'tn-scxd-last-sync'
 };
 
-// 初始产品数据
-const initialProducts: Product[] = [
-  {
-    id: '1',
-    productCode: 'CW-001-30x30',
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    availableDimensions: ['30cm x 30cm x 5cm', '25cm x 25cm x 4cm'],
-    weight: 2.5,
-    pieceCount: 4,
-    minimumOrderQty: 10,
-    availableColors: ['红色', '蓝色', '绿色', '黄色'],
-    unitPrice: 45.00,
-    remarks: '适合室内攀岩墙使用',
-    features: ['高强度材料，安全可靠', '精密加工，质量上乘', '多种规格可选，满足不同需求', '专业设计，操作简便', '严格质检，品质保证'],
-    applications: '适用于室内攀岩馆、户外天然岩壁、人工攀岩墙等各种攀岩场景。无论是初学者还是专业攀岩者，都能找到适合的规格和配置。',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    category: '岩点',
-    subCategory: '玻璃钢境面',
-    targetCustomers: ['OEM客户', '品牌客户'],
-    discountable: true,
-    maxDiscount: 15
-  },
-  {
-    id: '2',
-    productCode: 'CW-002-25x25',
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    availableDimensions: ['25cm x 25cm x 4cm', '20cm x 15cm x 10cm'],
-    weight: 1.8,
-    pieceCount: 6,
-    minimumOrderQty: 15,
-    availableColors: ['蓝色', '绿色', '黑色'],
-    unitPrice: 38.00,
-    remarks: '适合初学者训练使用',
-    features: ['轻量化设计', '易于安装', '表面防滑处理', '环保材质'],
-    applications: '主要用于初学者攀岩训练，适合攀岩馆的儿童区域和初级线路设置。',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    category: '攀岩板材',
-    subCategory: '常规攀岩板',
-    targetCustomers: ['工程客户'],
-    discountable: true,
-    maxDiscount: 12
-  },
-  {
-    id: '3',
-    productCode: 'CW-003-35x35',
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    availableDimensions: ['35cm x 35cm x 6cm', '40cm x 30cm x 20cm'],
-    weight: 3.2,
-    pieceCount: 2,
-    minimumOrderQty: 8,
-    availableColors: ['绿色', '橙色', '紫色'],
-    unitPrice: 55.00,
-    remarks: '专业级攀岩点，适合高难度线路',
-    features: ['超强握力', '耐磨损设计', '专业认证', '长期耐用'],
-    applications: '专为高难度攀岩线路设计，适用于竞赛级攀岩墙和专业训练场所。',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    category: '岩点',
-    subCategory: 'PU点',
-    targetCustomers: ['品牌客户', '工程客户'],
-    discountable: false,
-    maxDiscount: 0
-  },
-  {
-    id: '4',
-    productCode: 'CW-004-50x40',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    availableDimensions: ['50cm x 40cm x 30cm'],
-    weight: 5.0,
-    pieceCount: 1,
-    minimumOrderQty: 5,
-    availableColors: ['红色', '黄色'],
-    unitPrice: 88.00,
-    remarks: '大型攀岩点，创造挑战性路线',
-    features: ['大尺寸设计', '多握点选择', '稳固安装', '视觉突出'],
-    applications: '用于创建具有挑战性的攀岩路线，适合高级攀岩者和竞赛使用。',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    category: '五金配件',
-    subCategory: '固定件',
-    targetCustomers: ['OEM客户'],
-    discountable: true,
-    maxDiscount: 8
-  },
-  {
-    id: '5',
-    productCode: 'CW-005-20x15',
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    availableDimensions: ['20cm x 15cm x 10cm'],
-    weight: 1.2,
-    pieceCount: 8,
-    minimumOrderQty: 20,
-    availableColors: ['白色', '灰色', '黑色', '红色'],
-    unitPrice: 28.00,
-    remarks: '小型训练点，适合技巧练习',
-    features: ['小巧便携', '易于抓握', '适合训练', '多颜色可选'],
-    applications: '主要用于技巧训练和热身练习，适合各个水平的攀岩者进行基础动作练习。',
-    isActive: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    category: '攀岩板材',
-    subCategory: '高密度攀岩板',
-    targetCustomers: ['OEM客户', '品牌客户', '工程客户'],
-    discountable: true,
-    maxDiscount: 20
-  }
-];
+// 数据版本控制
+const DATA_VERSION = '1.0.0';
+const SYNC_INTERVAL = 5 * 60 * 1000; // 5分钟检查一次
 
 // 初始用户数据
 const initialUsers: User[] = [
@@ -193,23 +84,78 @@ const storage = {
   // 初始化标志
   _initialized: false,
 
+  // 检查数据版本和同步状态
+  checkDataVersion: () => {
+    if (typeof window === 'undefined') return false;
+    
+    const storedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+    const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+    const now = Date.now();
+    
+    // 如果版本不匹配或超过同步间隔，需要重新初始化
+    if (storedVersion !== DATA_VERSION || 
+        !lastSync || 
+        (now - parseInt(lastSync)) > SYNC_INTERVAL) {
+      return false;
+    }
+    return true;
+  },
+
+  // 强制重置数据（解决数据不同步问题）
+  forceReset: () => {
+    if (typeof window === 'undefined') return;
+    
+    console.log('🔄 正在重新同步数据...');
+    
+    // 清除旧数据
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    
+    // 重新初始化
+    storage._initialized = false;
+    storage.ensureInitialized();
+    
+    console.log('✅ 数据同步完成');
+  },
+
+  // 更新同步时间戳
+  updateSyncTimestamp: () => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
+    localStorage.setItem(STORAGE_KEYS.DATA_VERSION, DATA_VERSION);
+  },
+
   // 确保初始化
   ensureInitialized: () => {
     if (typeof window === 'undefined' || storage._initialized) return;
     
-    // 如果localStorage中没有产品数据，使用初始数据
-    if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(initialProducts));
-    }
-    
-    // 如果localStorage中没有用户数据，使用初始数据
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+    // 检查数据版本，如果不匹配则强制重置
+    if (!storage.checkDataVersion()) {
+      console.log('🔄 检测到数据版本不匹配，正在重新同步数据...');
+      
+      // 清除旧数据
+      localStorage.removeItem(STORAGE_KEYS.USERS);
+      localStorage.removeItem(STORAGE_KEYS.ORDERS);
+      
+      // 重新设置初始数据
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
-    }
-    
-    // 如果localStorage中没有订单数据，初始化为空数组
-    if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+      
+      // 更新版本信息
+      storage.updateSyncTimestamp();
+      
+      console.log('✅ 数据同步完成');
+    } else {
+      // 正常初始化逻辑
+      // 如果localStorage中没有用户数据，使用初始数据
+      if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
+      }
+      
+      // 如果localStorage中没有订单数据，初始化为空数组
+      if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+      }
     }
     
     storage._initialized = true;
@@ -230,21 +176,6 @@ const storage = {
     } catch {
       return fallback;
     }
-  },
-
-  // 获取产品数据
-  getProducts: (): Product[] => {
-    if (typeof window === 'undefined') return initialProducts;
-    storage.ensureInitialized();
-    const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-    return storage.safeJSONParse(stored, initialProducts);
-  },
-
-  // 保存产品数据
-  setProducts: (products: Product[]): void => {
-    if (typeof window === 'undefined') return;
-    storage.ensureInitialized();
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   },
 
   // 获取用户数据
@@ -275,16 +206,6 @@ const storage = {
     if (typeof window === 'undefined') return;
     storage.ensureInitialized();
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-  },
-
-  // 重置所有数据（调试用）
-  resetAllData: (): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
-    localStorage.removeItem(STORAGE_KEYS.USERS);
-    localStorage.removeItem(STORAGE_KEYS.ORDERS);
-    storage._initialized = false;
-    storage.ensureInitialized();
   }
 };
 
@@ -293,89 +214,8 @@ const simulateDelay = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-// 产品服务
-export const mockProductService = {
-  async getAll(customerType?: CustomerType): Promise<Product[]> {
-    await simulateDelay(500);
-    const products = storage.getProducts();
-    // 过滤激活产品并按创建时间降序排序（新产品在前）
-    let filteredProducts = products.filter(p => p.isActive);
-    
-    // 如果指定了客户类型，只返回目标客户包含该类型的产品
-    if (customerType) {
-      filteredProducts = filteredProducts.filter(p => 
-        p.targetCustomers.includes(customerType)
-      );
-    }
-    
-    return filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  },
-
-  // 管理员专用：获取所有产品（包括禁用的）
-  async getAllForAdmin(): Promise<Product[]> {
-    await simulateDelay(500);
-    const products = storage.getProducts();
-    // 按创建时间降序排序（新产品在前）
-    return products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  },
-
-  async getById(id: string): Promise<Product | null> {
-    await simulateDelay(200);
-    const products = storage.getProducts();
-    return products.find(p => p.id === id) || null;
-  },
-
-  async create(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-    await simulateDelay(300);
-    const products = storage.getProducts();
-    const newProduct: Product = {
-      ...productData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    products.push(newProduct);
-    storage.setProducts(products);
-    return newProduct;
-  },
-
-  async update(id: string, updates: Partial<Product>): Promise<Product> {
-    await simulateDelay(300);
-    const products = storage.getProducts();
-    const index = products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    
-    const existingProduct = products[index];
-    if (!existingProduct) throw new Error('Product not found');
-    
-    products[index] = { 
-      ...existingProduct, 
-      ...updates, 
-      updatedAt: new Date() 
-    };
-    storage.setProducts(products);
-    return products[index]!;
-  },
-
-  async delete(id: string): Promise<void> {
-    await simulateDelay(300);
-    const products = storage.getProducts();
-    const index = products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    
-    // 真正删除产品，而不是只设置isActive为false
-    products.splice(index, 1);
-    storage.setProducts(products);
-  },
-
-  async uploadFromExcel(newProducts: Product[]): Promise<void> {
-    await simulateDelay(1000);
-    const products = storage.getProducts();
-    // 将新产品添加到数组开头，确保它们显示在前面
-    products.unshift(...newProducts);
-    storage.setProducts(products);
-  }
-};
+// 导出产品服务 - 为了向后兼容
+export const mockProductService = productService;
 
 // 订单服务
 export const mockOrderService = {
@@ -383,7 +223,7 @@ export const mockOrderService = {
     await simulateDelay(500);
     
     const orders = storage.getOrders();
-    const products = storage.getProducts();
+    const products = await productService.getAllForAdmin();
     const orderNumber = generateOrderId();
     
     // 获取商品详细信息
@@ -399,7 +239,7 @@ export const mockOrderService = {
         orderItems.push({
           productId: item.productId,
           productCode: product.productCode,
-          productName: product.productCode, // 使用产品编号作为名称
+          productName: product.productCode,
           image: product.image,
           selectedDimension: product.availableDimensions[0] || '',
           weight: product.weight,
@@ -408,7 +248,6 @@ export const mockOrderService = {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           subtotal: subtotal,
-          // 新增字段
           discount: discount,
           originalPrice: originalPrice,
           discountedPrice: discountedPrice,
@@ -437,7 +276,6 @@ export const mockOrderService = {
       paymentMethod: 'bill_confirm',
       createdAt: new Date(),
       updatedAt: new Date(),
-      // 新增字段
       originalAmount: orderData.originalAmount || orderData.totalAmount,
       discountAmount: orderData.discountAmount || 0,
     };
@@ -713,5 +551,77 @@ export const mockAuthService = {
       ...securityStats,
       sessionStats
     };
+  }
+};
+
+// 导出数据同步工具（供管理员使用）
+export const dataSyncUtils = {
+  // 强制重置所有数据到初始状态
+  forceResetAllData: () => {
+    if (typeof window === 'undefined') {
+      console.log('❌ 服务端环境无法操作本地存储');
+      return false;
+    }
+    
+    try {
+      console.log('🔄 开始强制重置所有数据...');
+      storage.forceReset();
+      console.log('✅ 数据重置完成');
+      return true;
+    } catch (error) {
+      console.error('❌ 数据重置失败:', error);
+      return false;
+    }
+  },
+
+  // 检查数据同步状态
+  checkSyncStatus: () => {
+    if (typeof window === 'undefined') {
+      return { synchronized: false, reason: '服务端环境' };
+    }
+
+    const version = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+    const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+    const now = Date.now();
+    
+    if (!version || version !== DATA_VERSION) {
+      return { 
+        synchronized: false, 
+        reason: `数据版本不匹配 (当前: ${version || '未知'}, 期望: ${DATA_VERSION})` 
+      };
+    }
+    
+    if (!lastSync) {
+      return { synchronized: false, reason: '缺少同步时间戳' };
+    }
+    
+    const timeSinceLastSync = now - parseInt(lastSync);
+    if (timeSinceLastSync > SYNC_INTERVAL) {
+      return { 
+        synchronized: false, 
+        reason: `超过同步间隔 (${Math.round(timeSinceLastSync / 1000 / 60)}分钟前)` 
+      };
+    }
+    
+    return { 
+      synchronized: true, 
+      lastSyncTime: new Date(parseInt(lastSync)).toLocaleString(),
+      version: version
+    };
+  },
+
+  // 手动触发数据同步
+  manualSync: () => {
+    if (typeof window === 'undefined') return false;
+    
+    try {
+      console.log('🔄 手动触发数据同步...');
+      storage.updateSyncTimestamp();
+      console.log('✅ 同步时间戳已更新');
+      return true;
+    } catch (error) {
+      console.error('❌ 手动同步失败:', error);
+      return false;
+    }
   }
 }; 

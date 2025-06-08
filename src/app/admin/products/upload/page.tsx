@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Upload, Download, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { mockProductService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
 import { parseColors, validateNumber, validateProductCode, generateId } from '@/lib/utils/helpers';
 import { 
   PRODUCT_CATEGORIES, 
@@ -246,7 +246,7 @@ export default function ProductUploadPage() {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      await mockProductService.uploadFromExcel(parsedData);
+              await productService.uploadFromExcel(parsedData);
       
       setCurrentStep('complete');
       toast.success('产品批量上传成功！');

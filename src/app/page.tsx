@@ -8,16 +8,16 @@ import { Badge } from '@/components/ui/badge'
 import { ShoppingCart, User, Package, FileText, ArrowLeft, ArrowRight, Star, CheckCircle, Users, Truck } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useCartStore } from '@/store/useCartStore'
-import { mockProductService } from '@/lib/services/mockDataService'
+import { productService } from '@/lib/services/productService'
 import { formatPrice } from '@/lib/utils/helpers'
 import type { Product } from '@/types'
 import Navigation from '@/components/Navigation'
 
-// 开发环境下导入数据测试工具
+// 开发环境下导入数据同步工具
 if (process.env.NODE_ENV === 'development') {
-	import('@/lib/utils/dataTest').then((module) => {
+	import('@/lib/services/mockDataService').then((module) => {
 		if (typeof window !== 'undefined') {
-			(window as any).dataTest = module.dataTestUtils;
+			(window as any).dataSync = module.dataSyncUtils;
 		}
 	});
 }
@@ -34,7 +34,7 @@ export default function HomePage() {
 	useEffect(() => {
 		const loadFeaturedProducts = async () => {
 			try {
-				const products = await mockProductService.getAll()
+				        const products = await productService.getAll()
 				// 取前4个产品作为特色产品
 				setFeaturedProducts(products.slice(0, 4))
 			} catch (error) {
@@ -188,9 +188,7 @@ export default function HomePage() {
 									<Link href="/login">
 										<Button className="text-sm sm:text-base">立即登录</Button>
 									</Link>
-									<p className="mt-3 text-xs sm:text-sm text-gray-500">
-										如需注册账户，请联系管理员
-									</p>
+									
 								</div>
 							</CardContent>
 						</Card>

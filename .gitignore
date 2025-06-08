@@ -44,3 +44,15 @@ yarn-error.log*
 
 # idea files
 .idea
+
+# production packages
+/dist/
+*.zip
+
+# logs
+logs
+*.log
+
+# temp files
+temp/
+tmp/

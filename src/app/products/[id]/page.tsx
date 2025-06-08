@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
-import { mockProductService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
 import { formatPrice } from '@/lib/utils/helpers';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
@@ -43,7 +43,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     const loadProduct = async () => {
       try {
         const resolvedParams = await params;
-        const productData = await mockProductService.getById(resolvedParams.id);
+        const productData = await productService.getById(resolvedParams.id);
         
         if (!productData) {
           toast.error('产品不存在');

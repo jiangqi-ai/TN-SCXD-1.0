@@ -40,12 +40,15 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { mockOrderService, mockAuthService, mockProductService } from '@/lib/services/mockDataService';
+import { mockOrderService, mockAuthService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
 import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
 import { exportOrdersToExcel, exportOrdersToPDF } from '@/lib/utils/exportUtils';
 import { generateContractFromOrder, exportContractToPDF } from '@/lib/utils/contractUtils';
 import type { Order, User, Contract, Product, CustomerType } from '@/types';
 import { toast } from 'sonner';
+import DataSyncStatus from '@/components/DataSyncStatus';
+import CloudSyncConfig from '@/components/CloudSyncConfig';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -133,7 +136,7 @@ export default function AdminPage() {
         const [ordersData, customersData, productsData] = await Promise.all([
           mockOrderService.getAll(),
           mockAuthService.getAllCustomers(),
-          mockProductService.getAllForAdmin(),
+          productService.getAllForAdmin(),
         ]);
 
         setOrders(ordersData);
@@ -543,7 +546,7 @@ ${itemsDetails}
   const handleToggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
       setTogglingProductId(productId);
-      const updatedProduct = await mockProductService.update(productId, { isActive: !currentStatus });
+              const updatedProduct = await productService.update(productId, { isActive: !currentStatus });
       setProducts(products.map(p => p.id === productId ? updatedProduct : p));
       toast.success(currentStatus ? '产品已禁用' : '产品已启用');
     } catch (error) {
@@ -1176,43 +1179,51 @@ ${itemsDetails}
 
           {/* 系统设置 */}
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>系统设置</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">基本设置</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">系统名称</label>
-                        <p className="text-sm text-gray-600">攀岩墙定制系统</p>
+            <div className="space-y-6">
+              {/* 云同步配置 */}
+              <CloudSyncConfig />
+              
+              {/* 数据同步状态 */}
+              <DataSyncStatus />
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>系统设置</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">基本设置</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">系统名称</label>
+                          <p className="text-sm text-gray-600">攀岩墙定制系统</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">系统版本</label>
+                          <p className="text-sm text-gray-600">v1.0.0</p>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">系统版本</label>
-                        <p className="text-sm text-gray-600">v1.0.0</p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">业务设置</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">运费政策</label>
+                          <p className="text-sm text-gray-600">运费到付</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">客服信息</label>
+                          <p className="text-sm text-gray-600">13632603365</p>
+                          <p className="text-sm text-gray-600">good-181@163.com</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">业务设置</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">运费政策</label>
-                        <p className="text-sm text-gray-600">运费到付</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">客服信息</label>
-                        <p className="text-sm text-gray-600">13632603365</p>
-                        <p className="text-sm text-gray-600">good-181@163.com</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

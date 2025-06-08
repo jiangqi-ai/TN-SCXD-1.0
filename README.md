@@ -1,147 +1,189 @@
-# 攀岩墙定制系统
+# TN-SCXD 攀岩产品管理系统
 
-一个基于 Next.js 的 B2B 攀岩墙定制系统，提供完整的产品管理、订单管理和用户管理功能。
+一个专为攀岩产品制造商设计的全功能管理系统，支持产品管理、订单处理、用户管理和云端数据同步。
 
-## ✨ 功能特点
+## ✨ 核心功能
 
-### 前台功能
-- 🏠 产品展示和浏览
-- 🔍 产品详情查看和规格选择
-- 🛒 购物车管理
-- 📋 订单查看和管理
-- 👤 用户注册和登录
-
-### 后台管理
-- 📊 数据统计面板
-- 📦 产品管理（Excel批量上传、编辑）
-- 👥 客户管理（查看、编辑、添加）
-- 👤 用户管理（查看、编辑、添加、角色管理）
-- 📋 订单管理（状态更新、生产管理、出货通知）
-- ⚙️ 系统设置
-
-### 技术特性
-- ✅ TypeScript 类型安全
-- ✅ 响应式设计
-- ✅ 多颜色和尺寸选择
-- ✅ Excel 文件上传处理
-- ✅ 实时价格计算
-- ✅ 运费到付模式
+- 🏗️ **产品管理** - 完整的产品CRUD操作，支持多规格、多颜色配置
+- 📦 **订单管理** - 在线下单、状态跟踪、订单导出
+- 👥 **用户系统** - 多角色权限管理，安全认证
+- ☁️ **云端同步** - 跨设备数据同步，基于JSONBin.io
+- 📊 **Excel导入导出** - 批量产品上传，订单数据导出
+- 📱 **响应式设计** - 支持桌面和移动设备
 
 ## 🚀 快速开始
 
-### 环境要求
+### 系统要求
 - Node.js 18.0 或更高版本
-- npm 或 yarn
+- npm 或 yarn 包管理器
 
-### 1. 安装依赖
-```bash
-npm install
-```
+### 安装步骤
 
-### 2. 环境变量配置
-创建 `.env` 文件并复制 `env.example` 的内容：
+1. **克隆项目**
+   ```bash
+   git clone <repository-url>
+   cd TN-SCXD-1.0
+   ```
 
-```bash
-cp env.example .env
-```
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
 
-编辑 `.env` 文件配置以下变量：
+3. **启动开发服务器**
+   ```bash
+   npm run dev
+   ```
 
-```bash
-# 默认用户密码配置
-DEFAULT_ADMIN_PASSWORD=admin123
-DEFAULT_CUSTOMER_PASSWORD=customer123
-
-# JWT密钥 (生产环境中使用复杂的随机字符串)
-JWT_SECRET=your-jwt-secret-key-here
-
-# 应用配置
-NEXT_PUBLIC_APP_NAME=攀岩墙定制系统
-NEXT_PUBLIC_APP_VERSION=1.0.1
-```
-
-### 3. 启动开发服务器
-```bash
-npm run dev
-```
-
-打开 [http://localhost:3000](http://localhost:3000) 查看应用。
-
-### 4. 构建生产版本
-```bash
-npm run build
-npm start
-```
+4. **访问应用**
+   打开浏览器访问: http://localhost:3000
 
 ## 🔐 默认账户
 
 ### 管理员账户
-- 用户名：`admin`
-- 密码：`admin123`（可通过环境变量修改）
+- **用户名**: admin
+- **密码**: admin123
+- **权限**: 完整系统管理权限
 
 ### 客户账户
-- 用户名：`customer1`
-- 密码：`customer123`（可通过环境变量修改）
+- **用户名**: customer1
+- **密码**: customer123
+- **权限**: 产品浏览和订单管理
+
+## 📝 可用脚本
+
+```bash
+# 开发环境
+npm run dev              # 启动开发服务器
+
+# 生产环境
+npm run build           # 构建生产版本
+npm run start           # 启动生产服务器
+npm run deploy          # 构建并打包
+
+# 工具
+npm run clean           # 清理构建文件
+npm run typecheck       # TypeScript 类型检查
+npm run check           # 代码质量检查
+```
+
+## 🌐 云端同步配置
+
+系统支持跨设备数据同步，配置步骤：
+
+1. 注册 JSONBin.io 账户: https://jsonbin.io
+2. 获取 Master Key
+3. 登录管理员账户
+4. 进入 管理后台 → 系统设置 → 云端同步配置
+5. 输入 API Key 并保存
+6. 系统将自动开始云端同步
+
+## 🛠 技术栈
+
+### 前端技术
+- **框架**: Next.js 15 (App Router)
+- **UI库**: React 19
+- **样式**: Tailwind CSS + Shadcn/ui
+- **状态管理**: Zustand
+- **类型检查**: TypeScript
+
+### 后端技术
+- **API**: Next.js API Routes
+- **数据存储**: LocalStorage + 云端同步
+- **文件处理**: XLSX, jsPDF
+- **安全**: 自定义认证系统
 
 ## 📁 项目结构
 
 ```
 src/
-├── app/                 # Next.js 13+ App Router
-│   ├── admin/          # 管理后台页面
-│   ├── products/       # 产品相关页面
-│   ├── orders/         # 订单相关页面
+├── app/                 # Next.js 13+ 应用路由
+│   ├── admin/          # 管理员页面
+│   ├── orders/         # 订单管理
+│   ├── products/       # 产品展示
 │   └── ...
-├── components/         # UI 组件
-│   ├── ui/            # shadcn/ui 组件
-│   └── Navigation.tsx  # 导航组件
-├── lib/               # 工具函数和服务
-│   ├── services/      # 数据服务
+├── components/         # React 组件
+│   └── ui/            # UI 组件库
+├── lib/               # 工具库和服务
+│   ├── services/      # 业务服务
 │   └── utils/         # 工具函数
 ├── store/             # Zustand 状态管理
-├── styles/            # 样式文件
 └── types/             # TypeScript 类型定义
 ```
 
-## 🔧 环境变量说明
+## 🎯 主要特性
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|---------|
-| `DEFAULT_ADMIN_PASSWORD` | 默认管理员密码 | `admin123` |
-| `DEFAULT_CUSTOMER_PASSWORD` | 默认客户密码 | `customer123` |
-| `JWT_SECRET` | JWT 签名密钥 | - |
-| `NEXT_PUBLIC_APP_NAME` | 应用名称 | `攀岩墙定制系统` |
-| `NEXT_PUBLIC_APP_VERSION` | 应用版本 | `1.0.1` |
+### 产品管理
+- 支持多种产品规格和颜色配置
+- 批量Excel导入产品数据
+- 产品状态管理（启用/禁用）
+- 客户类型筛选显示
 
-## 🔒 安全注意事项
+### 订单系统
+- 在线购物车和下单流程
+- 订单状态跟踪（待确认→已确认→生产中→已完成）
+- 订单导出（Excel/PDF格式）
+- 客户订单历史查询
 
-1. **生产环境部署前**：
-   - 修改所有默认密码
-   - 使用复杂的 JWT 密钥
-   - 确保 `.env` 文件不被提交到版本控制
+### 用户管理
+- 多角色权限系统
+- 安全登录认证
+- 用户会话管理
+- IP访问控制
 
-2. **密码安全**：
-   - 生产环境使用强密码
-   - 定期更换密码
-   - 考虑实现密码加密存储
+### 数据同步
+- 云端数据实时同步
+- 多设备数据一致性
+- 自动故障恢复
+- 手动备份功能
 
-## 🚀 部署指南
+## 🚢 部署说明
 
-### Vercel 部署
+### 生产环境部署
 
-1. 推送代码到 GitHub
-2. 在 Vercel 导入项目
-3. 配置环境变量
-4. 点击部署
+1. **构建项目**
+   ```bash
+   npm run build
+   ```
 
-### 其他平台
+2. **打包部署文件**
+   ```bash
+   npm run package
+   ```
 
-确保在部署平台配置所有必要的环境变量。
+3. **部署到服务器**
+   ```bash
+   # 上传 dist/*.zip 到服务器
+   unzip tn-scxd-production-*.zip
+   npm install --production
+   npm start
+   ```
+
+### 环境配置
+
+复制 `env.example` 为 `.env.local` 并配置相应的环境变量（可选）。
+
+## 🔧 自定义开发
+
+### 添加新功能
+1. 在 `src/app/` 下创建新的路由页面
+2. 在 `src/components/` 下创建新的组件
+3. 在 `src/lib/services/` 下添加业务逻辑
+4. 在 `src/types/` 下定义相关类型
+
+### 修改样式
+项目使用 Tailwind CSS，可以直接修改组件的 className 或在 `tailwind.config.js` 中配置主题。
+
+## 📞 技术支持
+
+如有问题或建议，请联系技术支持团队。
 
 ## 📄 许可证
 
-MIT License - 可自由使用和修改。
+本项目仅供学习和演示使用。
 
 ---
 
-**开始您的攀岩墙定制业务！** 🏔️
+**版本**: 1.0.0  
+**构建日期**: 2025-06-08  
+**状态**: ✅ 生产就绪
