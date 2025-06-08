@@ -262,10 +262,15 @@ export default function ProductUploadPage() {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-              await productService.uploadFromExcel(parsedData);
+      await productService.uploadFromExcel(parsedData);
       
       setCurrentStep('complete');
       toast.success('产品批量上传成功！');
+      
+      // 延迟跳转到管理页面，避免刷新问题
+      setTimeout(() => {
+        router.push('/admin');
+      }, 2000);
     } catch (error) {
       console.error('Upload failed:', error);
       toast.error('上传失败，请重试');

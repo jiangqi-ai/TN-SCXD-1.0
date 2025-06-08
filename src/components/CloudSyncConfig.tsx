@@ -24,12 +24,19 @@ export default function CloudSyncConfig() {
   const [cloudLastUpdate, setCloudLastUpdate] = useState<string | null>(null)
 
   useEffect(() => {
+    // 确保在客户端执行
+    if (typeof window === 'undefined') return
+    
     const currentConfig = cloudSyncService.getConfig()
     setConfig(currentConfig)
     
     // 获取云端最后更新时间
     if (currentConfig.enabled) {
-      cloudSyncService.getCloudLastUpdate().then(setCloudLastUpdate)
+      cloudSyncService.getCloudLastUpdate()
+        .then(setCloudLastUpdate)
+        .catch(error => {
+          console.warn('获取云端更新时间失败:', error)
+        })
     }
   }, [])
 

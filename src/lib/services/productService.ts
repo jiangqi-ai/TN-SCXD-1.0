@@ -44,6 +44,11 @@ export const productService = {
   async getAll(customerType?: CustomerType): Promise<Product[]> {
     await simulateDelay(100); // 减少延迟到100ms提升速度
     
+    // 确保在客户端执行
+    if (typeof window === 'undefined') {
+      return initialProducts;
+    }
+    
     // 优先从云端同步最新数据
     if (cloudSyncService.isCloudSyncEnabled()) {
       try {
@@ -79,6 +84,11 @@ export const productService = {
 
   async getAllForAdmin(): Promise<Product[]> {
     await simulateDelay(100); // 减少延迟到100ms提升速度
+    
+    // 确保在客户端执行
+    if (typeof window === 'undefined') {
+      return initialProducts;
+    }
     
     // 管理员也需要从云端同步最新数据
     if (cloudSyncService.isCloudSyncEnabled()) {

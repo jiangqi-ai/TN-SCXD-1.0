@@ -87,6 +87,11 @@ export const cloudSyncService = {
 
   // 从云端读取数据
   fetchFromCloud: async (): Promise<Product[]> => {
+    // 确保在客户端执行
+    if (typeof window === 'undefined') {
+      throw new Error('云同步仅在客户端可用');
+    }
+    
     const config = getCloudConfig();
     
     if (!config.enabled || !config.apiKey) {
@@ -136,6 +141,11 @@ export const cloudSyncService = {
 
   // 上传数据到云端
   uploadToCloud: async (products: Product[]): Promise<void> => {
+    // 确保在客户端执行
+    if (typeof window === 'undefined') {
+      throw new Error('云同步仅在客户端可用');
+    }
+    
     const config = getCloudConfig();
     
     if (!config.enabled || !config.apiKey) {

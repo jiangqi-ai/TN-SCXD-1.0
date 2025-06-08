@@ -23,11 +23,19 @@ export default function HomePage() {
 	const { getTotalItems } = useCartStore()
 	const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
 	const [isLoading, setIsLoading] = useState(true)
+	const [isMounted, setIsMounted] = useState(false)
 
 	useEffect(() => {
+		setIsMounted(true)
+	}, [])
+
+	useEffect(() => {
+		if (!isMounted) return
+
 		const loadFeaturedProducts = async () => {
 			try {
-				const products = await productService.getAll()
+				const customerType = user?.customerType
+				const products = await productService.getAll(customerType)
 				// 取前4个产品作为特色产品
 				setFeaturedProducts(products.slice(0, 4))
 				
@@ -43,7 +51,7 @@ export default function HomePage() {
 		}
 
 		loadFeaturedProducts()
-	}, [])
+	}, [isMounted, user?.customerType])
 
 	const ProductCard = ({ product }: { product: Product }) => (
 		<Card className="transition-shadow hover:shadow-lg">
