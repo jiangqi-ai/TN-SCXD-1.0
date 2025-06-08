@@ -1,24 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { ArrowLeft, Package, CreditCard, Truck } from 'lucide-react'
-import { useCartStore } from '@/store/useCartStore'
-import { useAuthStore } from '@/store/useAuthStore'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import { mockOrderService } from '@/lib/services/mockDataService'
 import { formatPrice } from '@/lib/utils/helpers'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useCartStore } from '@/store/useCartStore'
 import type { CreateOrderRequest } from '@/types'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, CreditCard, Package, Truck } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
 const checkoutSchema = z.object({
   shippingAddress: z.object({
@@ -118,31 +118,31 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 返回按钮 */}
         <Button
           variant="ghost"
           onClick={() => router.back()}
           className="mb-6"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           返回购物车
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* 左侧：收货信息和支付方式 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* 收货地址 */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Truck className="h-5 w-5 mr-2" />
+                    <Truck className="mr-2 h-5 w-5" />
                     收货信息
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <Label htmlFor="contactName">联系人姓名 *</Label>
                       <Input
@@ -151,7 +151,7 @@ export default function CheckoutPage() {
                         className={errors.shippingAddress?.contactName ? 'border-red-500' : ''}
                       />
                       {errors.shippingAddress?.contactName && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="mt-1 text-red-500 text-sm">
                           {errors.shippingAddress.contactName.message}
                         </p>
                       )}
@@ -165,7 +165,7 @@ export default function CheckoutPage() {
                         className={errors.shippingAddress?.phone ? 'border-red-500' : ''}
                       />
                       {errors.shippingAddress?.phone && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="mt-1 text-red-500 text-sm">
                           {errors.shippingAddress.phone.message}
                         </p>
                       )}
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
                       className={errors.shippingAddress?.address ? 'border-red-500' : ''}
                     />
                     {errors.shippingAddress?.address && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="mt-1 text-red-500 text-sm">
                         {errors.shippingAddress.address.message}
                       </p>
                     )}
@@ -211,7 +211,7 @@ export default function CheckoutPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2" />
+                    <CreditCard className="mr-2 h-5 w-5" />
                     支付方式
                   </CardTitle>
                 </CardHeader>
@@ -227,8 +227,8 @@ export default function CheckoutPage() {
                   </RadioGroup>
                   
                   {paymentMethod === 'bill_confirm' && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
+                    <div className="mt-4 rounded-lg bg-blue-50 p-4">
+                      <p className="text-blue-800 text-sm">
                         <strong>对账单信息：</strong><br />
                         对账单将通过电子邮件发送给您。请在收到对账单后，按照对账单上的指示进行支付。
                       </p>
@@ -254,7 +254,7 @@ export default function CheckoutPage() {
             <Card className="sticky top-8">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Package className="h-5 w-5 mr-2" />
+                  <Package className="mr-2 h-5 w-5" />
                   订单摘要
                 </CardTitle>
               </CardHeader>
@@ -263,11 +263,11 @@ export default function CheckoutPage() {
                   <div key={`${item.productId}-${item.selectedColor}`} className="flex justify-between">
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.productCode}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-gray-500 text-xs">
                         {item.selectedColor} × {item.quantity}
                       </p>
                     </div>
-                    <p className="text-sm font-medium">
+                    <p className="font-medium text-sm">
                       {formatPrice(item.unitPrice * item.quantity)}
                     </p>
                   </div>

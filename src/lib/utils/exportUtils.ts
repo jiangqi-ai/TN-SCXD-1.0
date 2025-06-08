@@ -1,8 +1,8 @@
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import type { ExportOptions, Order } from '@/types';
 import html2canvas from 'html2canvas';
-import type { Order, ExportOptions } from '@/types';
-import { formatPrice, formatDate } from './helpers';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
+import { formatDate, formatPrice } from './helpers';
 
 // 订单导出为Excel
 export const exportOrdersToExcel = (orders: Order[], options: ExportOptions = { format: 'excel', includeItems: true, includeCustomerInfo: true }) => {
@@ -27,7 +27,7 @@ export const exportOrdersToExcel = (orders: Order[], options: ExportOptions = { 
   }));
 
   // 创建详细商品数据（如果需要包含商品明细）
-  let itemsData: any[] = [];
+  const itemsData: any[] = [];
   if (options.includeItems) {
     orders.forEach(order => {
       order.items.forEach(item => {

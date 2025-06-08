@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, Percent, DollarSign } from 'lucide-react';
 import { formatPrice } from '@/lib/utils/helpers';
 import type { Order, OrderItem } from '@/types';
+import { Calculator, DollarSign, Percent } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface PriceDiscountDialogProps {
@@ -174,7 +174,7 @@ export default function PriceDiscountDialog({
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
-      <Calculator className="h-4 w-4 mr-2" />
+      <Calculator className="mr-2 h-4 w-4" />
       调整价格
     </Button>
   );
@@ -184,18 +184,18 @@ export default function PriceDiscountDialog({
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
-            <Calculator className="h-5 w-5 mr-2" />
+            <Calculator className="mr-2 h-5 w-5" />
             价格折扣调整 - {order.orderNumber}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* 全局折扣设置 */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
+          <div className="rounded-lg bg-blue-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
               <h3 className="font-medium">全局折扣设置</h3>
               <Button size="sm" onClick={applyGlobalDiscount}>
                 应用全局折扣
@@ -204,7 +204,7 @@ export default function PriceDiscountDialog({
             <div className="flex items-center space-x-4">
               <div className="flex-1">
                 <Label htmlFor="globalDiscount">折扣百分比</Label>
-                <div className="flex items-center space-x-2 mt-1">
+                <div className="mt-1 flex items-center space-x-2">
                   <Input
                     id="globalDiscount"
                     type="number"
@@ -218,7 +218,7 @@ export default function PriceDiscountDialog({
                   <Percent className="h-4 w-4 text-gray-400" />
                 </div>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-gray-600 text-sm">
                 注意：不支持打折的商品将保持原价
               </div>
             </div>
@@ -236,14 +236,14 @@ export default function PriceDiscountDialog({
               };
 
               return (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={index} className="rounded-lg border p-4">
+                  <div className="mb-3 flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.productCode}</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-gray-600 text-sm">
                         {item.selectedDimension} | {item.selectedColor} | 数量: {item.quantity}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="mt-1 flex items-center gap-2">
                         {item.discountable ? (
                           <Badge variant="default" className="text-xs">
                             可打折（最高{item.maxDiscount}%）
@@ -256,16 +256,16 @@ export default function PriceDiscountDialog({
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">原价: {formatPrice(item.unitPrice)}</p>
-                      <p className="text-sm text-gray-500">原小计: {formatPrice(item.subtotal)}</p>
+                      <p className="text-gray-500 text-sm">原价: {formatPrice(item.unitPrice)}</p>
+                      <p className="text-gray-500 text-sm">原小计: {formatPrice(item.subtotal)}</p>
                     </div>
                   </div>
 
                   {item.discountable && (
-                    <div className="grid grid-cols-3 gap-4 items-end">
+                    <div className="grid grid-cols-3 items-end gap-4">
                       <div>
                         <Label htmlFor={`discount-${index}`}>折扣百分比</Label>
-                        <div className="flex items-center space-x-2 mt-1">
+                        <div className="mt-1 flex items-center space-x-2">
                           <Input
                             id={`discount-${index}`}
                             type="number"
@@ -281,13 +281,13 @@ export default function PriceDiscountDialog({
                       </div>
                       <div>
                         <Label>新单价</Label>
-                        <p className="font-medium text-primary mt-1">
+                        <p className="mt-1 font-medium text-primary">
                           {formatPrice(discount.newPrice)}
                         </p>
                       </div>
                       <div>
                         <Label>新小计</Label>
-                        <p className="font-medium text-primary mt-1">
+                        <p className="mt-1 font-medium text-primary">
                           {formatPrice(discount.newSubtotal)}
                         </p>
                       </div>
@@ -295,7 +295,7 @@ export default function PriceDiscountDialog({
                   )}
 
                   {!item.discountable && (
-                    <div className="text-center py-2 text-gray-500">
+                    <div className="py-2 text-center text-gray-500">
                       此商品不支持价格调整
                     </div>
                   )}
@@ -307,14 +307,14 @@ export default function PriceDiscountDialog({
           <Separator />
 
           {/* 价格汇总 */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-medium mb-3">价格汇总</h3>
+          <div className="rounded-lg bg-gray-50 p-4">
+            <h3 className="mb-3 font-medium">价格汇总</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>原订单总额:</span>
                 <span>{formatPrice(totals.originalTotal)}</span>
               </div>
-              <div className="flex justify-between text-primary font-medium">
+              <div className="flex justify-between font-medium text-primary">
                 <span>调整后总额:</span>
                 <span>{formatPrice(totals.newTotal)}</span>
               </div>
@@ -340,12 +340,12 @@ export default function PriceDiscountDialog({
             >
               {isApplying ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
                   应用中...
                 </>
               ) : (
                 <>
-                  <DollarSign className="h-4 w-4 mr-2" />
+                  <DollarSign className="mr-2 h-4 w-4" />
                   应用折扣
                 </>
               )}

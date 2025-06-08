@@ -1,9 +1,9 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { User, LoginCredentials, RegisterData } from '@/types';
 import { mockAuthService } from '@/lib/services/mockDataService';
 import { securityService } from '@/lib/services/securityService';
+import type { LoginCredentials, RegisterData, User } from '@/types';
 import { toast } from 'sonner';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   user: User | null;

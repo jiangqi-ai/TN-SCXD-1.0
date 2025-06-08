@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Minus, Plus, Trash2, Package } from 'lucide-react';
+import { formatPrice } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
-import { formatPrice } from '@/lib/utils/helpers';
+import { Minus, Package, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function CartPage() {
@@ -20,11 +20,11 @@ export default function CartPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">请先登录</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="flex min-h-screen flex-col justify-center bg-gray-50 px-4 py-12">
+        <div className="mx-auto max-w-md text-center">
+          <ShoppingCart className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+          <h2 className="mb-4 font-bold text-2xl text-gray-900">请先登录</h2>
+          <p className="mb-6 text-gray-600">
             您需要登录后才能查看购物车
           </p>
           <Link href="/login">
@@ -37,16 +37,16 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">购物车是空的</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="flex min-h-screen flex-col justify-center bg-gray-50 px-4 py-12">
+        <div className="mx-auto max-w-md text-center">
+          <ShoppingCart className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+          <h2 className="mb-4 font-bold text-2xl text-gray-900">购物车是空的</h2>
+          <p className="mb-6 text-gray-600">
             还没有添加任何商品，去产品中心看看吧
           </p>
           <Link href="/products">
             <Button>
-              <Package className="h-4 w-4 mr-2" />
+              <Package className="mr-2 h-4 w-4" />
               浏览产品
             </Button>
           </Link>
@@ -80,14 +80,14 @@ export default function CartPage() {
   };
 
   const CartItem = ({ item }: { item: typeof items[0] }) => (
-    <div className="flex gap-4 p-4 border-b">
+    <div className="flex gap-4 border-b p-4">
       <div className="flex-shrink-0">
-        <div className="aspect-square w-16 bg-gray-100 rounded flex items-center justify-center">
+        <div className="flex aspect-square w-16 items-center justify-center rounded bg-gray-100">
           {item.image ? (
             <img 
               src={item.image} 
               alt={item.productCode}
-              className="w-full h-full object-cover rounded"
+              className="h-full w-full rounded object-cover"
             />
           ) : (
             <Package className="h-6 w-6 text-gray-400" />
@@ -95,9 +95,9 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-medium text-gray-900">{item.productCode}</h3>
-        <div className="mt-1 text-sm text-gray-600 space-y-1">
+      <div className="min-w-0 flex-1">
+        <h3 className="font-medium text-gray-900 text-lg">{item.productCode}</h3>
+        <div className="mt-1 space-y-1 text-gray-600 text-sm">
           <p>规格: {item.selectedDimension}</p>
           <p>重量: {item.weight}kg | 包含: {item.pieceCount}个</p>
           <p>颜色: <span className="font-medium">{item.selectedColor}</span></p>
@@ -123,7 +123,7 @@ export default function CartPage() {
           >
             <Minus className="h-3 w-3" />
           </Button>
-          <span className="px-3 py-1 border rounded text-center min-w-12">
+          <span className="min-w-12 rounded border px-3 py-1 text-center">
             {item.quantity}
           </span>
           <Button
@@ -136,8 +136,8 @@ export default function CartPage() {
         </div>
 
         <div className="text-right">
-          <p className="text-lg font-semibold">{formatPrice(item.subtotal)}</p>
-          <p className="text-sm text-gray-500">小计</p>
+          <p className="font-semibold text-lg">{formatPrice(item.subtotal)}</p>
+          <p className="text-gray-500 text-sm">小计</p>
         </div>
       </div>
     </div>
@@ -145,15 +145,15 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">购物车</h1>
+          <h1 className="mb-2 font-bold text-3xl text-gray-900">购物车</h1>
           <p className="text-gray-600">
             共 {getTotalItems()} 件商品
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* 购物车商品列表 */}
           <div className="lg:col-span-2">
             <Card>
@@ -165,7 +165,7 @@ export default function CartPage() {
                   onClick={clearCart}
                   className="text-red-600 hover:text-red-700"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="mr-2 h-4 w-4" />
                   清空购物车
                 </Button>
               </CardHeader>
@@ -205,11 +205,11 @@ export default function CartPage() {
                     <span>商品总价</span>
                     <span>{formatPrice(getTotalAmount())}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm">
                     <span>运费</span>
                     <span>到付</span>
                   </div>
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm">
                     <span>税费</span>
                     <span>结算时计算</span>
                   </div>
@@ -217,7 +217,7 @@ export default function CartPage() {
 
                 <Separator />
 
-                <div className="flex justify-between text-lg font-semibold">
+                <div className="flex justify-between font-semibold text-lg">
                   <span>小计</span>
                   <span>{formatPrice(getTotalAmount())}</span>
                 </div>
@@ -238,7 +238,7 @@ export default function CartPage() {
                   </Link>
                 </div>
 
-                <div className="text-xs text-gray-500 space-y-1">
+                <div className="space-y-1 text-gray-500 text-xs">
                   <p>• 价格不含运费和税费</p>
                   <p>• 运费到付，实际费用根据收货地址计算</p>
                   <p>• 支持批量定制，量大从优</p>
@@ -250,8 +250,8 @@ export default function CartPage() {
 
         {/* 推荐商品 */}
         <div className="mt-12">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">推荐商品</h3>
-          <div className="text-center py-8 text-gray-500">
+          <h3 className="mb-6 font-semibold text-gray-900 text-xl">推荐商品</h3>
+          <div className="py-8 text-center text-gray-500">
             <p>暂无推荐商品</p>
             <Link href="/products" className="text-primary hover:underline">
               浏览更多产品

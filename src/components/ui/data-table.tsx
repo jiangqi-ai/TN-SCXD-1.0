@@ -1,8 +1,8 @@
-import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package } from 'lucide-react';
+import React from 'react';
 
 interface Column<T> {
   key: keyof T | string;
@@ -54,15 +54,15 @@ export function DataTable<T extends Record<string, any>>({
       <Card>
         {title && (
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <CardTitle>{title}</CardTitle>
               {headerActions}
             </div>
           </CardHeader>
         )}
         <CardContent>
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2"></div>
             <p className="text-gray-600">加载中...</p>
           </div>
         </CardContent>
@@ -75,18 +75,18 @@ export function DataTable<T extends Record<string, any>>({
       <Card>
         {title && (
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <CardTitle>{title}</CardTitle>
               {headerActions}
             </div>
           </CardHeader>
         )}
         <CardContent>
-          <div className="text-center py-8">
-            {emptyState?.icon || <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />}
-            <p className="text-gray-600 mb-2">{emptyState?.title || '暂无数据'}</p>
+          <div className="py-8 text-center">
+            {emptyState?.icon || <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />}
+            <p className="mb-2 text-gray-600">{emptyState?.title || '暂无数据'}</p>
             {emptyState?.description && (
-              <p className="text-sm text-gray-500 mb-4">{emptyState.description}</p>
+              <p className="mb-4 text-gray-500 text-sm">{emptyState.description}</p>
             )}
             {emptyState?.action}
           </div>
@@ -99,7 +99,7 @@ export function DataTable<T extends Record<string, any>>({
     <Card>
       {title && (
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <CardTitle>{title}</CardTitle>
             {headerActions}
           </div>
@@ -115,7 +115,7 @@ export function DataTable<T extends Record<string, any>>({
                   {columns.map((column, index) => (
                     <th
                       key={String(column.key) + index}
-                      className="px-4 py-3 text-left text-sm font-medium text-gray-900"
+                      className="px-4 py-3 text-left font-medium text-gray-900 text-sm"
                       style={{ width: column.width }}
                     >
                       {column.title}
@@ -142,9 +142,9 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* 移动端卡片布局 */}
-        <div className="md:hidden space-y-4 p-4">
+        <div className="space-y-4 p-4 md:hidden">
           {paginatedData.map((record, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-3">
+            <div key={index} className="space-y-3 rounded-lg border p-4">
               {columns.map((column, colIndex) => {
                 const value = getNestedValue(record, String(column.key));
                 const renderedValue = column.render 
@@ -154,11 +154,11 @@ export function DataTable<T extends Record<string, any>>({
                 if (!renderedValue && renderedValue !== 0) return null;
                 
                 return (
-                  <div key={String(column.key) + colIndex} className="flex justify-between items-start">
-                    <span className="text-sm font-medium text-gray-600 min-w-0 flex-shrink-0 mr-3">
+                  <div key={String(column.key) + colIndex} className="flex items-start justify-between">
+                    <span className="mr-3 min-w-0 flex-shrink-0 font-medium text-gray-600 text-sm">
                       {column.title}:
                     </span>
-                    <div className="text-sm text-right flex-1 min-w-0">
+                    <div className="min-w-0 flex-1 text-right text-sm">
                       {renderedValue}
                     </div>
                   </div>
@@ -170,8 +170,8 @@ export function DataTable<T extends Record<string, any>>({
 
         {/* 分页 */}
         {pagination && totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-3 border-t">
-            <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between border-t px-4 py-3">
+            <div className="text-gray-600 text-sm">
               显示 {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, data.length)} 条，共 {data.length} 条
             </div>
             <div className="flex space-x-2">
@@ -183,7 +183,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 上一页
               </Button>
-              <span className="flex items-center text-sm text-gray-600">
+              <span className="flex items-center text-gray-600 text-sm">
                 第 {currentPage} 页，共 {totalPages} 页
               </span>
               <Button

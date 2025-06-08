@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import Navigation from '@/components/Navigation';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Filter, ShoppingCart, ArrowLeft, Package, Minus, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { productService } from '@/lib/services/productService';
+import { debounce, formatPrice } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
-import { productService } from '@/lib/services/productService';
-import { formatPrice, debounce } from '@/lib/utils/helpers';
 import type { Product } from '@/types';
+import { ArrowLeft, Filter, Minus, Package, Plus, Search, ShoppingCart } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import Navigation from '@/components/Navigation';
 
 export default function ProductsPage() {
   const { isAuthenticated, user } = useAuthStore();
@@ -117,17 +117,17 @@ export default function ProductsPage() {
     };
 
     return (
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="transition-shadow hover:shadow-lg">
         <CardHeader className="pb-3">
-          <div className="aspect-square relative bg-gray-100 rounded-lg mb-3 sm:aspect-square md:aspect-[4/3] lg:aspect-square">
+          <div className="relative mb-3 aspect-square rounded-lg bg-gray-100 sm:aspect-square md:aspect-[4/3] lg:aspect-square">
             {product.image ? (
               <img
                 src={product.image}
                 alt={product.productCode}
-                className="w-full h-full object-cover rounded-lg"
+                className="h-full w-full rounded-lg object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <div className="flex h-full w-full items-center justify-center text-gray-400">
                 <Package className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" />
               </div>
             )}
@@ -136,7 +136,7 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="space-y-1 text-sm sm:text-base md:text-sm text-gray-600">
+            <div className="space-y-1 text-gray-600 text-sm sm:text-base md:text-sm">
               <p>重量: {product.weight}kg</p>
               <p>包含: {product.pieceCount}个</p>
               <p>起订: {product.minimumOrderQty}件</p>
@@ -144,16 +144,16 @@ export default function ProductsPage() {
 
             {/* 颜色选择 */}
             <div>
-              <label className="text-sm sm:text-base md:text-sm font-medium">颜色选择:</label>
-              <div className="flex flex-wrap gap-1 mt-1">
+              <label className="font-medium text-sm sm:text-base md:text-sm">颜色选择:</label>
+              <div className="mt-1 flex flex-wrap gap-1">
                 {product.availableColors.map(color => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`px-2 py-1 text-xs sm:text-sm md:text-xs rounded border ${
+                    className={`rounded border px-2 py-1 text-xs sm:text-sm md:text-xs ${
                       selectedColor === color
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                        ? "border-primary bg-primary text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-primary"
                     }`}
                   >
                     {color}
@@ -164,16 +164,16 @@ export default function ProductsPage() {
 
             {/* 尺寸选择 */}
             <div>
-              <label className="text-sm sm:text-base md:text-sm font-medium">尺寸选择:</label>
-              <div className="flex flex-wrap gap-1 mt-1">
+              <label className="font-medium text-sm sm:text-base md:text-sm">尺寸选择:</label>
+              <div className="mt-1 flex flex-wrap gap-1">
                 {product.availableDimensions.map(dimension => (
                   <button
                     key={dimension}
                     onClick={() => setSelectedDimension(dimension)}
-                    className={`px-2 py-1 text-xs sm:text-sm md:text-xs rounded border ${
+                    className={`rounded border px-2 py-1 text-xs sm:text-sm md:text-xs ${
                       selectedDimension === dimension
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                        ? "border-primary bg-primary text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-primary"
                     }`}
                   >
                     {dimension}
@@ -184,44 +184,44 @@ export default function ProductsPage() {
 
             {/* 数量选择 */}
             <div>
-              <label className="text-sm sm:text-base md:text-sm font-medium">数量:</label>
-              <div className="flex items-center gap-2 mt-1">
+              <label className="font-medium text-sm sm:text-base md:text-sm">数量:</label>
+              <div className="mt-1 flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setQuantity(Math.max(product.minimumOrderQty, quantity - 1))}
                   disabled={quantity <= product.minimumOrderQty}
-                  className="h-8 w-8 sm:h-10 sm:w-10 md:h-8 md:w-8 p-0"
+                  className="h-8 w-8 p-0 sm:h-10 sm:w-10 md:h-8 md:w-8"
                 >
                   -
                 </Button>
-                <span className="px-3 py-1 border rounded text-center min-w-12 text-sm sm:text-base md:text-sm">
+                <span className="min-w-12 rounded border px-3 py-1 text-center text-sm sm:text-base md:text-sm">
                   {quantity}
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="h-8 w-8 sm:h-10 sm:w-10 md:h-8 md:w-8 p-0"
+                  className="h-8 w-8 p-0 sm:h-10 sm:w-10 md:h-8 md:w-8"
                 >
                   +
                 </Button>
               </div>
             </div>
 
-            <div className="pt-3 border-t">
-              <div className="flex justify-between items-center mb-3">
+            <div className="border-t pt-3">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-lg sm:text-xl md:text-lg font-bold text-primary">
+                  <p className="font-bold text-lg text-primary sm:text-xl md:text-lg">
                     {formatPrice(product.unitPrice)}
                   </p>
-                  <p className="text-sm sm:text-base md:text-sm text-gray-500">单价</p>
+                  <p className="text-gray-500 text-sm sm:text-base md:text-sm">单价</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg sm:text-xl md:text-lg font-bold">
+                  <p className="font-bold text-lg sm:text-xl md:text-lg">
                     {formatPrice(product.unitPrice * quantity)}
                   </p>
-                  <p className="text-sm sm:text-base md:text-sm text-gray-500">小计</p>
+                  <p className="text-gray-500 text-sm sm:text-base md:text-sm">小计</p>
                 </div>
               </div>
 
@@ -231,7 +231,7 @@ export default function ProductsPage() {
                   onClick={handleAddToCart}
                   disabled={!isAuthenticated}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  <ShoppingCart className="mr-2 h-4 w-4" />
                   {isAuthenticated ? '加入购物车' : '请先登录'}
                 </Button>
                 <Link href={`/products/${product.id}`}>
@@ -251,73 +251,73 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         {/* 返回按钮 */}
         <div className="mb-4 sm:mb-6">
           <Link href="/">
             <Button variant="outline" size="sm" className="text-sm sm:text-base">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回首页
             </Button>
           </Link>
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">产品中心</h1>
-          <p className="text-sm sm:text-base text-gray-600">
+          <h1 className="mb-2 font-bold text-2xl text-gray-900 sm:mb-4 sm:text-3xl lg:text-3xl">产品中心</h1>
+          <p className="text-gray-600 text-sm sm:text-base">
             浏览我们的攀岩产品，选择适合您需求的配套解决方案
           </p>
         </div>
 
         {/* 分类菜单栏 */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+          <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors sm:text-base ${
                 selectedCategory === 'all'
                   ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
               全部产品
             </button>
             <button
               onClick={() => setSelectedCategory('攀岩板材')}
-              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors sm:text-base ${
                 selectedCategory === '攀岩板材'
                   ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
               攀岩板材
             </button>
             <button
               onClick={() => setSelectedCategory('岩点')}
-              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors sm:text-base ${
                 selectedCategory === '岩点'
                   ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
               岩点
             </button>
             <button
               onClick={() => setSelectedCategory('五金配件')}
-              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors sm:text-base ${
                 selectedCategory === '五金配件'
                   ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
               五金配件
             </button>
             <button
               onClick={() => setSelectedCategory('复合板')}
-              className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors sm:text-base ${
                 selectedCategory === '复合板'
                   ? 'bg-primary text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
               复合板
@@ -325,7 +325,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:gap-8">
           {/* 侧边栏筛选 - 在移动端折叠 */}
           <div className="w-full lg:w-64 lg:flex-shrink-0">
             <Card>
@@ -338,9 +338,9 @@ export default function ProductsPage() {
               <CardContent className="space-y-4 sm:space-y-6">
                 {/* 搜索 */}
                 <div>
-                  <label className="text-sm sm:text-sm font-medium">搜索</label>
+                  <label className="font-medium text-sm sm:text-sm">搜索</label>
                   <div className="relative mt-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-400" />
                     <Input
                       placeholder="搜索产品编号或尺寸..."
                       value={searchTerm}
@@ -352,8 +352,8 @@ export default function ProductsPage() {
 
                 {/* 颜色筛选 */}
                 <div>
-                  <label className="text-sm sm:text-sm font-medium">颜色</label>
-                  <div className="space-y-2 mt-2">
+                  <label className="font-medium text-sm sm:text-sm">颜色</label>
+                  <div className="mt-2 space-y-2">
                     {allColors.map(color => (
                       <div key={color} className="flex items-center space-x-2">
                         <Checkbox
@@ -361,7 +361,7 @@ export default function ProductsPage() {
                           checked={selectedColors.includes(color)}
                           onCheckedChange={() => handleColorFilter(color)}
                         />
-                        <label htmlFor={color} className="text-sm sm:text-base cursor-pointer">
+                        <label htmlFor={color} className="cursor-pointer text-sm sm:text-base">
                           {color}
                         </label>
                       </div>
@@ -371,7 +371,7 @@ export default function ProductsPage() {
 
                 {/* 价格筛选 */}
                 <div>
-                  <label className="text-sm sm:text-sm font-medium">价格范围</label>
+                  <label className="font-medium text-sm sm:text-sm">价格范围</label>
                   <div className="mt-2 space-y-2">
                     <div className="flex gap-2">
                       <Input
@@ -389,7 +389,7 @@ export default function ProductsPage() {
                         className="text-sm sm:text-base"
                       />
                     </div>
-                    <p className="text-xs sm:text-xs text-gray-500">
+                    <p className="text-gray-500 text-xs sm:text-xs">
                       当前: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
                     </p>
                   </div>
@@ -404,39 +404,39 @@ export default function ProductsPage() {
 
           {/* 产品列表 */}
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <p className="text-sm sm:text-base text-gray-600">
+            <div className="mb-4 flex items-center justify-between sm:mb-6">
+              <p className="text-gray-600 text-sm sm:text-base">
                 找到 {filteredProducts.length} 个产品
               </p>
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                 {[...Array(6)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <CardHeader>
-                      <div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="mb-3 aspect-square rounded-lg bg-gray-200"></div>
+                      <div className="h-4 rounded bg-gray-200"></div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="h-3 bg-gray-200 rounded"></div>
-                        <div className="h-3 bg-gray-200 rounded"></div>
-                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                        <div className="h-3 rounded bg-gray-200"></div>
+                        <div className="h-3 rounded bg-gray-200"></div>
+                        <div className="h-3 w-2/3 rounded bg-gray-200"></div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                 {filteredProducts.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-base sm:text-lg text-gray-500 mb-4">没有找到符合条件的产品</p>
+              <div className="py-8 text-center sm:py-12">
+                <p className="mb-4 text-base text-gray-500 sm:text-lg">没有找到符合条件的产品</p>
                 <Button onClick={clearFilters} className="text-sm sm:text-base">清除筛选条件</Button>
               </div>
             )}

@@ -1,38 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import Navigation from '@/components/Navigation';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DataTable } from '@/components/ui/data-table';
-import { 
-  Search, 
-  Package, 
-  FileText, 
-  Calendar, 
-  Eye, 
-  ArrowLeft, 
-  Trash2, 
-  Download, 
-  FileSpreadsheet, 
-  Printer,
-  MoreHorizontal
-} from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuthStore } from '@/store/useAuthStore';
 import { mockOrderService } from '@/lib/services/mockDataService';
-import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
 import { exportOrdersToExcel, exportOrdersToPDF, generatePrintableOrdersHTML } from '@/lib/utils/exportUtils';
+import { formatDate, formatPrice, getOrderStatusColor, getOrderStatusText } from '@/lib/utils/helpers';
+import { useAuthStore } from '@/store/useAuthStore';
 import type { Order } from '@/types';
-import { toast } from 'sonner';
-import Navigation from '@/components/Navigation';
-import { useReactToPrint } from 'react-to-print';
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Download, 
+  Eye, 
+  FileSpreadsheet, 
+  FileText, 
+  MoreHorizontal,
+  Package, 
+  Printer,
+  Search, 
+  Trash2 
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { toast } from 'sonner';
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -163,13 +163,13 @@ export default function OrdersPage() {
   });
 
   const OrderCard = ({ order }: { order: Order }) => (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="transition-shadow hover:shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">{order.orderNumber}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              <Calendar className="inline h-4 w-4 mr-1" />
+            <p className="mt-1 text-gray-600 text-sm">
+              <Calendar className="mr-1 inline h-4 w-4" />
               {formatDate(order.orderDate)}
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function OrdersPage() {
         <div className="space-y-4">
           {/* 订单商品 */}
           <div>
-            <h4 className="font-medium mb-2">订单商品:</h4>
+            <h4 className="mb-2 font-medium">订单商品:</h4>
             <div className="space-y-2">
               {order.items.slice(0, 2).map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
@@ -193,7 +193,7 @@ export default function OrdersPage() {
                 </div>
               ))}
               {order.items.length > 2 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-500 text-sm">
                   还有 {order.items.length - 2} 个商品...
                 </p>
               )}
@@ -202,24 +202,24 @@ export default function OrdersPage() {
 
           {/* 收货信息 */}
           <div>
-            <h4 className="font-medium mb-2">收货信息:</h4>
-            <p className="text-sm text-gray-600">
+            <h4 className="mb-2 font-medium">收货信息:</h4>
+            <p className="text-gray-600 text-sm">
               {order.customerInfo.name} | {order.customerInfo.contact}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-gray-600 text-sm">
               {order.customerInfo.deliveryAddress}
             </p>
           </div>
 
           {/* 订单金额和操作 */}
-          <div className="flex justify-between items-end pt-4 border-t">
+          <div className="flex items-end justify-between border-t pt-4">
             <div>
-              <p className="text-lg font-semibold text-primary">
+              <p className="font-semibold text-lg text-primary">
                 总计: {formatPrice(order.totalAmount)}
               </p>
-              <p className="text-sm text-gray-500">支付方式: 对账单确认</p>
+              <p className="text-gray-500 text-sm">支付方式: 对账单确认</p>
               {order.deliveryDate && (
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-500 text-sm">
                   预计交货: {formatDate(order.deliveryDate, 'short')}
                 </p>
               )}
@@ -227,7 +227,7 @@ export default function OrdersPage() {
             <div className="flex items-center gap-2">
               <Link href={`/orders/${order.id}`}>
                 <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-1" />
+                  <Eye className="mr-1 h-4 w-4" />
                   查看详情
                 </Button>
               </Link>
@@ -239,7 +239,7 @@ export default function OrdersPage() {
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="mr-1 h-4 w-4" />
                         删除
                       </Button>
                     </AlertDialogTrigger>
@@ -278,19 +278,19 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 返回按钮 */}
         <div className="mb-6">
           <Link href="/">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回首页
             </Button>
           </Link>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">我的订单</h1>
+          <h1 className="mb-4 font-bold text-3xl text-gray-900">我的订单</h1>
           <p className="text-gray-600">
             管理您的订单，查看订单状态和物流信息
           </p>
@@ -299,10 +299,10 @@ export default function OrdersPage() {
         {/* 筛选和搜索 */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-4 md:flex-row">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-400" />
                   <Input
                     placeholder="搜索订单号或商品名称..."
                     value={searchTerm}
@@ -336,7 +336,7 @@ export default function OrdersPage() {
                     onClick={handlePrint}
                     disabled={isExporting}
                   >
-                    <Printer className="h-4 w-4 mr-2" />
+                    <Printer className="mr-2 h-4 w-4" />
                     打印
                   </Button>
                   
@@ -345,25 +345,25 @@ export default function OrdersPage() {
                       <Button variant="outline" size="sm" disabled={isExporting}>
                         {isExporting ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
                             导出中...
                           </>
                         ) : (
                           <>
-                            <Download className="h-4 w-4 mr-2" />
+                            <Download className="mr-2 h-4 w-4" />
                             导出
-                            <MoreHorizontal className="h-4 w-4 ml-1" />
+                            <MoreHorizontal className="ml-1 h-4 w-4" />
                           </>
                         )}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={handleExportExcel}>
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
                         导出为Excel
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleExportPDF}>
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="mr-2 h-4 w-4" />
                         导出为PDF
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -393,14 +393,14 @@ export default function OrdersPage() {
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="mb-2 h-6 w-3/4 rounded bg-gray-200"></div>
+                  <div className="h-4 w-1/2 rounded bg-gray-200"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                    <div className="h-4 rounded bg-gray-200"></div>
+                    <div className="h-4 w-5/6 rounded bg-gray-200"></div>
+                    <div className="h-4 w-4/6 rounded bg-gray-200"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -413,30 +413,30 @@ export default function OrdersPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             {orders.length === 0 ? (
               <div>
-                <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                <h3 className="mb-2 font-semibold text-gray-900 text-xl">
                   还没有订单
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="mb-6 text-gray-600">
                   您还没有下过订单，去产品中心看看吧
                 </p>
                 <Link href="/products">
                   <Button>
-                    <Package className="h-4 w-4 mr-2" />
+                    <Package className="mr-2 h-4 w-4" />
                     浏览产品
                   </Button>
                 </Link>
               </div>
             ) : (
               <div>
-                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <FileText className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                <h3 className="mb-2 font-semibold text-gray-900 text-xl">
                   没有找到订单
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="mb-4 text-gray-600">
                   没有找到符合条件的订单，试试调整筛选条件
                 </p>
                 <Button
@@ -455,35 +455,35 @@ export default function OrdersPage() {
 
         {/* 统计信息 */}
         {orders.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{orders.length}</div>
-                <div className="text-sm text-gray-600">总订单数</div>
+                <div className="font-bold text-2xl text-primary">{orders.length}</div>
+                <div className="text-gray-600 text-sm">总订单数</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="font-bold text-2xl text-yellow-600">
                   {orders.filter(o => o.status === 'pending').length}
                 </div>
-                <div className="text-sm text-gray-600">待确认</div>
+                <div className="text-gray-600 text-sm">待确认</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="font-bold text-2xl text-blue-600">
                   {orders.filter(o => o.status === 'production').length}
                 </div>
-                <div className="text-sm text-gray-600">生产中</div>
+                <div className="text-gray-600 text-sm">生产中</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className="font-bold text-2xl text-green-600">
                   {orders.filter(o => o.status === 'completed').length}
                 </div>
-                <div className="text-sm text-gray-600">已完成</div>
+                <div className="text-gray-600 text-sm">已完成</div>
               </CardContent>
             </Card>
           </div>

@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Package, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Eye, EyeOff, Package } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -44,11 +44,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-gray-50 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center mb-8">
-          <Package className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">攀岩定制系统</h1>
+        <div className="mb-8 text-center">
+          <Package className="mx-auto mb-4 h-12 w-12 text-primary" />
+          <h1 className="mb-2 font-bold text-3xl text-gray-900">攀岩定制系统</h1>
           <p className="text-gray-600">
             请登录您的账户以访问攀岩配套定制服务
           </p>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
 
             <div className="mt-6 text-center">
-              <Link href="/" className="text-sm text-gray-600 hover:text-primary">
+              <Link href="/" className="text-gray-600 text-sm hover:text-primary">
                 返回首页
               </Link>
             </div>

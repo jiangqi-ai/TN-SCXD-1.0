@@ -1,27 +1,27 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Upload, Download, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
-import { productService } from '@/lib/services/productService';
-import { parseColors, validateNumber, validateProductCode, generateId } from '@/lib/utils/helpers';
 import { 
-  PRODUCT_CATEGORIES, 
   CUSTOMER_TYPES, 
+  PRODUCT_CATEGORIES, 
+  getDefaultDiscountRange, 
   getSubCategories, 
   isValidCategory, 
-  isValidSubCategory, 
   isValidCustomerType,
-  getDefaultDiscountRange 
+  isValidSubCategory 
 } from '@/lib/constants/productCategories';
-import type { Product, ExcelProductRow, ProductCategory, ProductSubCategory, CustomerType } from '@/types';
+import { productService } from '@/lib/services/productService';
+import { generateId, parseColors, validateNumber, validateProductCode } from '@/lib/utils/helpers';
+import { useAuthStore } from '@/store/useAuthStore';
+import type { CustomerType, ExcelProductRow, Product, ProductCategory, ProductSubCategory } from '@/types';
+import { AlertCircle, ArrowLeft, CheckCircle, Download, FileText, Upload, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
@@ -271,19 +271,19 @@ export default function ProductUploadPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 返回按钮 */}
         <div className="mb-6">
           <Link href="/admin">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回管理后台
             </Button>
           </Link>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">产品批量上传</h1>
+          <h1 className="mb-4 font-bold text-3xl text-gray-900">产品批量上传</h1>
           <p className="text-gray-600">
             通过Excel文件批量导入产品数据
           </p>
@@ -296,12 +296,12 @@ export default function ProductUploadPage() {
               <div className={`rounded-full p-2 ${currentStep === 'select' ? 'bg-primary text-white' : 'bg-gray-200'}`}>1</div>
               <span className="ml-2">选择文件</span>
             </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
+            <div className="h-px flex-1 bg-gray-300"></div>
             <div className={`flex items-center ${currentStep === 'preview' ? 'text-primary' : 'text-gray-400'}`}>
               <div className={`rounded-full p-2 ${currentStep === 'preview' ? 'bg-primary text-white' : 'bg-gray-200'}`}>2</div>
               <span className="ml-2">预览数据</span>
             </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
+            <div className="h-px flex-1 bg-gray-300"></div>
             <div className={`flex items-center ${currentStep === 'uploading' || currentStep === 'complete' ? 'text-primary' : 'text-gray-400'}`}>
               <div className={`rounded-full p-2 ${currentStep === 'uploading' || currentStep === 'complete' ? 'bg-primary text-white' : 'bg-gray-200'}`}>3</div>
               <span className="ml-2">上传完成</span>
@@ -317,8 +317,8 @@ export default function ProductUploadPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <Upload className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">
+                <Upload className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                <p className="mb-4 text-gray-600">
                   请选择包含产品数据的Excel文件（支持.xlsx和.xls格式）
                 </p>
                 
@@ -332,7 +332,7 @@ export default function ProductUploadPage() {
                       className="hidden"
                     />
                     <Button onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="mr-2 h-4 w-4" />
                       选择文件
                     </Button>
                   </div>
@@ -342,19 +342,19 @@ export default function ProductUploadPage() {
                   </div>
                   
                   <Button variant="outline" onClick={downloadTemplate}>
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="mr-2 h-4 w-4" />
                     下载Excel模板
                   </Button>
                 </div>
               </div>
 
               {errors.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <XCircle className="h-5 w-5 text-red-600 mr-2" />
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <div className="mb-2 flex items-center">
+                    <XCircle className="mr-2 h-5 w-5 text-red-600" />
                     <h4 className="font-medium text-red-800">发现错误</h4>
                   </div>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
+                  <ul className="list-inside list-disc space-y-1 text-red-700 text-sm">
                     {errors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -362,12 +362,12 @@ export default function ProductUploadPage() {
                 </div>
               )}
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600 mr-2" />
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="mb-2 flex items-center">
+                  <AlertCircle className="mr-2 h-5 w-5 text-blue-600" />
                   <h4 className="font-medium text-blue-800">注意事项</h4>
                 </div>
-                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
+                <ul className="list-inside list-disc space-y-1 text-blue-700 text-sm">
                   <li>Excel文件必须包含指定的列名</li>
                   <li>产品编号不能重复且不能为空</li>
                   <li>数值字段（重量、个数、价格等）必须为有效数字</li>
@@ -383,7 +383,7 @@ export default function ProductUploadPage() {
         {currentStep === 'preview' && (
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <CardTitle>第二步：预览数据</CardTitle>
                 <div className="space-x-2">
                   <Button variant="outline" onClick={resetUpload}>
@@ -400,16 +400,16 @@ export default function ProductUploadPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">产品编号</th>
-                      <th className="text-left p-2">分类</th>
-                      <th className="text-left p-2">目标客户</th>
-                      <th className="text-left p-2">尺寸</th>
-                      <th className="text-left p-2">重量</th>
-                      <th className="text-left p-2">个数</th>
-                      <th className="text-left p-2">起订量</th>
-                      <th className="text-left p-2">颜色</th>
-                      <th className="text-left p-2">价格</th>
-                      <th className="text-left p-2">折扣</th>
+                      <th className="p-2 text-left">产品编号</th>
+                      <th className="p-2 text-left">分类</th>
+                      <th className="p-2 text-left">目标客户</th>
+                      <th className="p-2 text-left">尺寸</th>
+                      <th className="p-2 text-left">重量</th>
+                      <th className="p-2 text-left">个数</th>
+                      <th className="p-2 text-left">起订量</th>
+                      <th className="p-2 text-left">颜色</th>
+                      <th className="p-2 text-left">价格</th>
+                      <th className="p-2 text-left">折扣</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -418,7 +418,7 @@ export default function ProductUploadPage() {
                         <td className="p-2">{product.productCode}</td>
                         <td className="p-2">
                           <div>
-                            <Badge variant="outline" className="text-xs mb-1">
+                            <Badge variant="outline" className="mb-1 text-xs">
                               {product.category}
                             </Badge>
                             {product.subCategory && (
@@ -469,7 +469,7 @@ export default function ProductUploadPage() {
                   </tbody>
                 </table>
                 {parsedData.length > 10 && (
-                  <p className="text-center text-gray-500 mt-4">
+                  <p className="mt-4 text-center text-gray-500">
                     还有 {parsedData.length - 10} 个产品未显示...
                   </p>
                 )}
@@ -484,11 +484,11 @@ export default function ProductUploadPage() {
             <CardHeader>
               <CardTitle>第三步：正在上传</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <Upload className="h-16 w-16 text-primary mx-auto animate-pulse" />
+            <CardContent className="space-y-4 text-center">
+              <Upload className="mx-auto h-16 w-16 animate-pulse text-primary" />
               <p className="text-gray-600">正在上传产品数据，请稍候...</p>
-              <Progress value={uploadProgress} className="w-full max-w-md mx-auto" />
-              <p className="text-sm text-gray-500">{uploadProgress}%</p>
+              <Progress value={uploadProgress} className="mx-auto w-full max-w-md" />
+              <p className="text-gray-500 text-sm">{uploadProgress}%</p>
             </CardContent>
           </Card>
         )}
@@ -499,8 +499,8 @@ export default function ProductUploadPage() {
             <CardHeader>
               <CardTitle>上传完成</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
+            <CardContent className="space-y-4 text-center">
+              <CheckCircle className="mx-auto h-16 w-16 text-green-600" />
               <p className="text-gray-600">
                 成功上传 {parsedData.length} 个产品！
               </p>

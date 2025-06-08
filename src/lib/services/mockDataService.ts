@@ -1,14 +1,14 @@
+import { generateId, generateOrderId } from "@/lib/utils/helpers";
 import type { 
-  User, 
-  Order, 
-  OrderItem,
   CreateOrderRequest, 
   LoginCredentials, 
-  RegisterData
+  Order, 
+  OrderItem,
+  RegisterData,
+  User 
 } from '@/types';
-import { generateId, generateOrderId } from "@/lib/utils/helpers";
-import { securityService } from './securityService';
 import { productService } from './productService';
+import { securityService } from './securityService';
 
 // 从环境变量获取默认密码
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
@@ -95,7 +95,7 @@ const storage = {
     // 如果版本不匹配或超过同步间隔，需要重新初始化
     if (storedVersion !== DATA_VERSION || 
         !lastSync || 
-        (now - parseInt(lastSync)) > SYNC_INTERVAL) {
+        (now - Number.parseInt(lastSync)) > SYNC_INTERVAL) {
       return false;
     }
     return true;
@@ -107,7 +107,7 @@ const storage = {
     
     console.log('🔄 正在重新同步数据...');
     
-    // 清除旧数据
+    // 清除旧数据 - 不清除产品数据，产品数据通过云端同步
     localStorage.removeItem(STORAGE_KEYS.USERS);
     localStorage.removeItem(STORAGE_KEYS.ORDERS);
     
@@ -133,7 +133,7 @@ const storage = {
     if (!storage.checkDataVersion()) {
       console.log('🔄 检测到数据版本不匹配，正在重新同步数据...');
       
-      // 清除旧数据
+      // 清除旧数据 - 不清除产品数据，产品数据通过云端同步
       localStorage.removeItem(STORAGE_KEYS.USERS);
       localStorage.removeItem(STORAGE_KEYS.ORDERS);
       
@@ -220,7 +220,7 @@ export const mockProductService = productService;
 // 订单服务
 export const mockOrderService = {
   async create(orderData: CreateOrderRequest): Promise<Order> {
-    await simulateDelay(500);
+    await simulateDelay(200); // 减少订单创建延迟
     
     const orders = storage.getOrders();
     const products = await productService.getAllForAdmin();
@@ -286,7 +286,7 @@ export const mockOrderService = {
   },
 
   async getAll(): Promise<Order[]> {
-    await simulateDelay(400);
+    await simulateDelay(100); // 减少获取所有订单延迟
     const orders = storage.getOrders();
     return [...orders].sort((a, b) => 
       b.orderDate.getTime() - a.orderDate.getTime()
@@ -294,7 +294,7 @@ export const mockOrderService = {
   },
 
   async getByCustomer(customerId: string): Promise<Order[]> {
-    await simulateDelay(400);
+    await simulateDelay(100); // 减少按客户获取订单延迟
     const orders = storage.getOrders();
     return orders
       .filter(order => order.customerId === customerId)
@@ -302,13 +302,13 @@ export const mockOrderService = {
   },
 
   async getById(orderId: string): Promise<Order | null> {
-    await simulateDelay(200);
+    await simulateDelay(50); // 减少按ID获取订单延迟
     const orders = storage.getOrders();
     return orders.find(o => o.id === orderId) || null;
   },
 
   async updateStatus(orderId: string, status: Order['status']): Promise<void> {
-    await simulateDelay(300);
+    await simulateDelay(100); // 减少更新订单状态延迟
     const orders = storage.getOrders();
     const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
@@ -334,7 +334,7 @@ export const mockOrderService = {
   },
 
   async setDeliveryDate(orderId: string, date: Date): Promise<void> {
-    await simulateDelay(300);
+    await simulateDelay(100); // 减少设置交货日期延迟
     const orders = storage.getOrders();
     const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
@@ -345,7 +345,7 @@ export const mockOrderService = {
   },
 
   async addProductionNotes(orderId: string, notes: string): Promise<void> {
-    await simulateDelay(300);
+    await simulateDelay(100); // 减少添加生产备注延迟
     const orders = storage.getOrders();
     const order = orders.find(o => o.id === orderId);
     if (!order) throw new Error('Order not found');
@@ -356,7 +356,7 @@ export const mockOrderService = {
   },
 
   async delete(orderId: string): Promise<void> {
-    await simulateDelay(300);
+    await simulateDelay(100); // 减少删除订单延迟
     const orders = storage.getOrders();
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) throw new Error('Order not found');
@@ -375,7 +375,7 @@ export const mockAuthService = {
       throw new Error(`IP已被临时阻止，请在${remainingTime}分钟后重试`);
     }
 
-    await simulateDelay(800);
+    await simulateDelay(200); // 减少登录延迟从800ms到200ms
     const users = storage.getUsers();
     const user = users.find(u => 
       (u.username === credentials.username || u.email === credentials.username) && 
@@ -415,7 +415,7 @@ export const mockAuthService = {
       throw new Error(`IP已被临时阻止，请在${remainingTime}分钟后重试`);
     }
 
-    await simulateDelay(600);
+    await simulateDelay(200); // 减少注册延迟从600ms到200ms
     const users = storage.getUsers();
     
     // 检查用户名是否已存在
@@ -456,13 +456,13 @@ export const mockAuthService = {
   },
 
   async logout(userId: string): Promise<void> {
-    await simulateDelay(200);
+    await simulateDelay(50); // 减少退出延迟到50ms
     // 移除用户会话
     securityService.removeUserSession(userId);
   },
 
   async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
-    await simulateDelay(400);
+    await simulateDelay(100); // 减少更新用户资料延迟
     const users = storage.getUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     
@@ -488,7 +488,7 @@ export const mockAuthService = {
   },
 
   async validateToken(userId: string): Promise<boolean> {
-    await simulateDelay(200);
+    await simulateDelay(50); // 减少令牌验证延迟到50ms
     const users = storage.getUsers();
     const user = users.find(u => u.id === userId && u.isActive);
     
@@ -509,7 +509,7 @@ export const mockAuthService = {
   },
 
   async getAllCustomers(): Promise<User[]> {
-    await simulateDelay(400);
+    await simulateDelay(100); // 减少获取所有客户延迟
     const users = storage.getUsers();
     return users
       .filter(u => u.role === 'customer' && u.isActive)
@@ -518,7 +518,7 @@ export const mockAuthService = {
 
   // 管理员功能：强制下线用户
   async forceLogoutUser(adminUserId: string, targetUserId: string): Promise<void> {
-    await simulateDelay(300);
+    await simulateDelay(100); // 减少强制下线延迟
     const users = storage.getUsers();
     const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
     
@@ -536,7 +536,7 @@ export const mockAuthService = {
     activeSessions: number;
     sessionStats: { totalSessions: number; sessionsByIP: { [ip: string]: number } };
   }> {
-    await simulateDelay(200);
+    await simulateDelay(50); // 减少安全统计延迟
     const users = storage.getUsers();
     const admin = users.find(u => u.id === adminUserId && u.role === 'admin');
     
@@ -595,7 +595,7 @@ export const dataSyncUtils = {
       return { synchronized: false, reason: '缺少同步时间戳' };
     }
     
-    const timeSinceLastSync = now - parseInt(lastSync);
+    const timeSinceLastSync = now - Number.parseInt(lastSync);
     if (timeSinceLastSync > SYNC_INTERVAL) {
       return { 
         synchronized: false, 
@@ -605,7 +605,7 @@ export const dataSyncUtils = {
     
     return { 
       synchronized: true, 
-      lastSyncTime: new Date(parseInt(lastSync)).toLocaleString(),
+      lastSyncTime: new Date(Number.parseInt(lastSync)).toLocaleString(),
       version: version
     };
   },

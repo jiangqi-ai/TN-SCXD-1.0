@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Edit, Trash2, Search, Package, Upload, ImageIcon } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
+import { Textarea } from '@/components/ui/textarea';
 import { productService } from '@/lib/services/productService';
 import { formatPrice } from '@/lib/utils/helpers';
+import { useAuthStore } from '@/store/useAuthStore';
 import type { Product } from '@/types';
+import { ArrowLeft, Edit, ImageIcon, Package, Search, Trash2, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function ProductEditPage() {
@@ -140,17 +140,17 @@ export default function ProductEditPage() {
   };
 
   const ProductCard = ({ product }: { product: Product }) => (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="transition-shadow hover:shadow-lg">
       <CardHeader className="pb-3">
-        <div className="aspect-square relative bg-gray-100 rounded-lg mb-3">
+        <div className="relative mb-3 aspect-square rounded-lg bg-gray-100">
           {product.image ? (
             <img
               src={product.image}
               alt={product.productCode}
-              className="w-full h-full object-cover rounded-lg"
+              className="h-full w-full rounded-lg object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <div className="flex h-full w-full items-center justify-center text-gray-400">
               <ImageIcon className="h-12 w-12" />
             </div>
           )}
@@ -158,12 +158,12 @@ export default function ProductEditPage() {
         <CardTitle className="text-lg">{product.productCode}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2 text-sm text-gray-600">
+        <div className="space-y-2 text-gray-600 text-sm">
           <p>尺寸: {product.availableDimensions.join(', ')}</p>
           <p>重量: {product.weight}kg</p>
           <p>包含: {product.pieceCount}个</p>
           <p>起订: {product.minimumOrderQty}件</p>
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className="mt-2 flex flex-wrap gap-1">
             {product.availableColors.map(color => (
               <Badge key={color} variant="secondary" className="text-xs">
                 {color}
@@ -171,9 +171,9 @@ export default function ProductEditPage() {
             ))}
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex justify-between items-center mb-3">
-            <p className="text-lg font-bold text-primary">
+        <div className="mt-4 border-t pt-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="font-bold text-lg text-primary">
               {formatPrice(product.unitPrice)}
             </p>
             <Badge variant={product.isActive ? 'default' : 'secondary'}>
@@ -187,7 +187,7 @@ export default function ProductEditPage() {
               onClick={() => handleEdit(product)}
               className="flex-1"
             >
-              <Edit className="h-4 w-4 mr-1" />
+              <Edit className="mr-1 h-4 w-4" />
               编辑
             </Button>
             <Button
@@ -205,19 +205,19 @@ export default function ProductEditPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 返回按钮 */}
         <div className="mb-6">
           <Link href="/admin">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回管理后台
             </Button>
           </Link>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">产品编辑</h1>
+          <h1 className="mb-4 font-bold text-3xl text-gray-900">产品编辑</h1>
           <p className="text-gray-600">
             管理和编辑产品信息
           </p>
@@ -227,7 +227,7 @@ export default function ProductEditPage() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-400" />
               <Input
                 placeholder="搜索产品编号或尺寸..."
                 value={searchTerm}
@@ -240,36 +240,36 @@ export default function ProductEditPage() {
 
         {/* 产品列表 */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="mb-3 aspect-square rounded-lg bg-gray-200"></div>
+                  <div className="h-4 rounded bg-gray-200"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    <div className="h-3 rounded bg-gray-200"></div>
+                    <div className="h-3 rounded bg-gray-200"></div>
+                    <div className="h-3 w-2/3 rounded bg-gray-200"></div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {filteredProducts.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="py-12 text-center">
+            <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 font-semibold text-gray-900 text-xl">
               {searchTerm ? '没有找到产品' : '暂无产品'}
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6 text-gray-600">
               {searchTerm ? '没有找到符合条件的产品' : '还没有添加任何产品'}
             </p>
             {searchTerm && (
@@ -282,7 +282,7 @@ export default function ProductEditPage() {
 
         {/* 编辑对话框 */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto">
             <DialogHeader>
               <DialogTitle>编辑产品</DialogTitle>
             </DialogHeader>
@@ -292,15 +292,15 @@ export default function ProductEditPage() {
                 <div>
                   <Label>产品图片</Label>
                   <div className="mt-2">
-                    <div className="aspect-square relative bg-gray-100 rounded-lg mb-3 w-32 h-32">
+                    <div className="relative mb-3 aspect-square h-32 w-32 rounded-lg bg-gray-100">
                       {editingProduct.image ? (
                         <img
                           src={editingProduct.image}
                           alt="产品图片"
-                          className="w-full h-full object-cover rounded-lg"
+                          className="h-full w-full rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center text-gray-400">
                           <ImageIcon className="h-8 w-8" />
                         </div>
                       )}
@@ -319,10 +319,10 @@ export default function ProductEditPage() {
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full"
                       >
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="mr-2 h-4 w-4" />
                         上传图片
                       </Button>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-gray-500 text-xs">
                         支持 JPG、PNG 格式，建议尺寸 800x800px
                       </p>
                     </div>
@@ -364,7 +364,7 @@ export default function ProductEditPage() {
                       value={editingProduct.weight}
                       onChange={(e) => setEditingProduct({
                         ...editingProduct,
-                        weight: parseFloat(e.target.value) || 0
+                        weight: Number.parseFloat(e.target.value) || 0
                       })}
                     />
                   </div>
@@ -376,7 +376,7 @@ export default function ProductEditPage() {
                       value={editingProduct.pieceCount}
                       onChange={(e) => setEditingProduct({
                         ...editingProduct,
-                        pieceCount: parseInt(e.target.value) || 0
+                        pieceCount: Number.parseInt(e.target.value) || 0
                       })}
                     />
                   </div>
@@ -391,7 +391,7 @@ export default function ProductEditPage() {
                       value={editingProduct.minimumOrderQty}
                       onChange={(e) => setEditingProduct({
                         ...editingProduct,
-                        minimumOrderQty: parseInt(e.target.value) || 0
+                        minimumOrderQty: Number.parseInt(e.target.value) || 0
                       })}
                     />
                   </div>
@@ -404,7 +404,7 @@ export default function ProductEditPage() {
                       value={editingProduct.unitPrice}
                       onChange={(e) => setEditingProduct({
                         ...editingProduct,
-                        unitPrice: parseFloat(e.target.value) || 0
+                        unitPrice: Number.parseFloat(e.target.value) || 0
                       })}
                     />
                   </div>

@@ -1,54 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import CloudSyncConfig from '@/components/CloudSyncConfig';
+import DataSyncStatus from '@/components/DataSyncStatus';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { mockAuthService, mockOrderService } from '@/lib/services/mockDataService';
+import { productService } from '@/lib/services/productService';
+import { exportContractToPDF, generateContractFromOrder } from '@/lib/utils/contractUtils';
+import { exportOrdersToExcel, exportOrdersToPDF } from '@/lib/utils/exportUtils';
+import { formatDate, formatPrice, getOrderStatusColor, getOrderStatusText } from '@/lib/utils/helpers';
+import { useAuthStore } from '@/store/useAuthStore';
+import type { Contract, CustomerType, Order, Product, User } from '@/types';
 import { 
-  Users, 
-  Package, 
-  ShoppingCart, 
-  TrendingUp,
-  Settings,
-  FileText,
-  Upload,
-  Edit,
   ArrowLeft,
-  LogOut,
-  Plus,
-  UserPlus,
+  Bell,
   Calendar,
   CheckCircle,
-  Truck,
-  Bell,
-  Trash2,
-  Shield,
   Download,
-  FileSpreadsheet,
-  Printer,
+  Edit,
   FilePlus,
-  MoreHorizontal
+  FileSpreadsheet,
+  FileText,
+  LogOut,
+  MoreHorizontal,
+  Package, 
+  Plus,
+  Printer,
+  Settings,
+  Shield,
+  ShoppingCart, 
+  Trash2,
+  TrendingUp,
+  Truck,
+  Upload,
+  UserPlus,
+  Users 
 } from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
-import { mockOrderService, mockAuthService } from '@/lib/services/mockDataService';
-import { productService } from '@/lib/services/productService';
-import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor } from '@/lib/utils/helpers';
-import { exportOrdersToExcel, exportOrdersToPDF } from '@/lib/utils/exportUtils';
-import { generateContractFromOrder, exportContractToPDF } from '@/lib/utils/contractUtils';
-import type { Order, User, Contract, Product, CustomerType } from '@/types';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import DataSyncStatus from '@/components/DataSyncStatus';
-import CloudSyncConfig from '@/components/CloudSyncConfig';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -564,15 +564,15 @@ ${itemsDetails}
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="mb-8 h-8 w-48 rounded bg-gray-200"></div>
+            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
               {[...Array(4)].map((_, i) => (
                 <Card key={i}>
                   <CardContent className="p-6">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                    <div className="mb-2 h-4 w-3/4 rounded bg-gray-200"></div>
+                    <div className="h-8 w-1/2 rounded bg-gray-200"></div>
                   </CardContent>
                 </Card>
               ))}
@@ -585,41 +585,41 @@ ${itemsDetails}
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* 返回按钮和退出登录 */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link href="/">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回首页
             </Button>
           </Link>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">欢迎，{user?.profile.name}</span>
+            <span className="text-gray-600 text-sm">欢迎，{user?.profile.name}</span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="mr-2 h-4 w-4" />
               退出登录
             </Button>
           </div>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">管理后台</h1>
+          <h1 className="mb-4 font-bold text-3xl text-gray-900">管理后台</h1>
           <p className="text-gray-600">
             攀岩墙定制系统管理面板
           </p>
         </div>
 
         {/* 快速操作卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           <Link href="/admin/products/edit">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="cursor-pointer transition-shadow hover:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <Package className="h-8 w-8 text-blue-600" />
                   <div className="ml-4">
-                    <p className="text-lg font-medium text-gray-900">产品管理</p>
-                    <p className="text-sm text-gray-600">管理产品信息和库存</p>
+                    <p className="font-medium text-gray-900 text-lg">产品管理</p>
+                    <p className="text-gray-600 text-sm">管理产品信息和库存</p>
                   </div>
                 </div>
               </CardContent>
@@ -627,26 +627,26 @@ ${itemsDetails}
           </Link>
 
           <Link href="/admin/security">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="cursor-pointer transition-shadow hover:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <Shield className="h-8 w-8 text-red-600" />
                   <div className="ml-4">
-                    <p className="text-lg font-medium text-gray-900">安全管理</p>
-                    <p className="text-sm text-gray-600">监控登录安全和会话</p>
+                    <p className="font-medium text-gray-900 text-lg">安全管理</p>
+                    <p className="text-gray-600 text-sm">监控登录安全和会话</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setIsAddUserDialogOpen(true)}>
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg" onClick={() => setIsAddUserDialogOpen(true)}>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <UserPlus className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-lg font-medium text-gray-900">添加用户</p>
-                  <p className="text-sm text-gray-600">创建新的系统用户</p>
+                  <p className="font-medium text-gray-900 text-lg">添加用户</p>
+                  <p className="text-gray-600 text-sm">创建新的系统用户</p>
                 </div>
               </div>
             </CardContent>
@@ -654,14 +654,14 @@ ${itemsDetails}
         </div>
 
         {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <ShoppingCart className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">总订单数</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+                  <p className="font-medium text-gray-600 text-sm">总订单数</p>
+                  <p className="font-bold text-2xl text-gray-900">{stats.totalOrders}</p>
                 </div>
               </div>
             </CardContent>
@@ -672,8 +672,8 @@ ${itemsDetails}
               <div className="flex items-center">
                 <FileText className="h-8 w-8 text-yellow-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">待处理订单</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingOrders}</p>
+                  <p className="font-medium text-gray-600 text-sm">待处理订单</p>
+                  <p className="font-bold text-2xl text-gray-900">{stats.pendingOrders}</p>
                 </div>
               </div>
             </CardContent>
@@ -684,8 +684,8 @@ ${itemsDetails}
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">客户总数</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
+                  <p className="font-medium text-gray-600 text-sm">客户总数</p>
+                  <p className="font-bold text-2xl text-gray-900">{stats.totalCustomers}</p>
                 </div>
               </div>
             </CardContent>
@@ -696,8 +696,8 @@ ${itemsDetails}
               <div className="flex items-center">
                 <TrendingUp className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">总收入</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
+                  <p className="font-medium text-gray-600 text-sm">总收入</p>
+                  <p className="font-bold text-2xl text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                 </div>
               </div>
             </CardContent>
@@ -707,19 +707,19 @@ ${itemsDetails}
         {/* 管理选项卡 */}
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="orders" className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50">订单管理</TabsTrigger>
-            <TabsTrigger value="products" className="text-green-600 data-[state=active]:text-green-700 data-[state=active]:bg-green-50">产品管理</TabsTrigger>
-            <TabsTrigger value="customers" className="text-purple-600 data-[state=active]:text-purple-700 data-[state=active]:bg-purple-50">客户管理</TabsTrigger>
-            <TabsTrigger value="users" className="text-orange-600 data-[state=active]:text-orange-700 data-[state=active]:bg-orange-50">用户管理</TabsTrigger>
-            <TabsTrigger value="security" className="text-red-600 data-[state=active]:text-red-700 data-[state=active]:bg-red-50">安全管理</TabsTrigger>
-            <TabsTrigger value="settings" className="text-gray-600 data-[state=active]:text-gray-700 data-[state=active]:bg-gray-50">系统设置</TabsTrigger>
+            <TabsTrigger value="orders" className="text-blue-600 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">订单管理</TabsTrigger>
+            <TabsTrigger value="products" className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">产品管理</TabsTrigger>
+            <TabsTrigger value="customers" className="text-purple-600 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700">客户管理</TabsTrigger>
+            <TabsTrigger value="users" className="text-orange-600 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">用户管理</TabsTrigger>
+            <TabsTrigger value="security" className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">安全管理</TabsTrigger>
+            <TabsTrigger value="settings" className="text-gray-600 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-700">系统设置</TabsTrigger>
           </TabsList>
 
           {/* 订单管理 */}
           <TabsContent value="orders">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <CardTitle>订单管理</CardTitle>
                   <div className="flex gap-2">
                     <DropdownMenu>
@@ -727,25 +727,25 @@ ${itemsDetails}
                         <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
                           {isExporting ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
                               导出中...
                             </>
                           ) : (
                             <>
-                              <Download className="h-4 w-4 mr-2" />
+                              <Download className="mr-2 h-4 w-4" />
                               导出订单
-                              <MoreHorizontal className="h-4 w-4 ml-1" />
+                              <MoreHorizontal className="ml-1 h-4 w-4" />
                             </>
                           )}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={handleExportOrdersExcel}>
-                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          <FileSpreadsheet className="mr-2 h-4 w-4" />
                           导出为Excel
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleExportOrdersPDF}>
-                          <FileText className="h-4 w-4 mr-2" />
+                          <FileText className="mr-2 h-4 w-4" />
                           导出为PDF
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -756,26 +756,26 @@ ${itemsDetails}
               <CardContent>
                 <div className="space-y-4">
                   {(orders || []).slice(0, 10).map(order => (
-                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={order.id} className="flex items-center justify-between rounded-lg border p-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-4">
                           <div>
                             <p className="font-medium">{order.orderNumber}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-gray-600 text-sm">
                               {order.customerInfo.name} | {formatDate(order.orderDate, 'short')}
                             </p>
                             {order.confirmedAt && (
-                              <p className="text-xs text-green-600">
+                              <p className="text-green-600 text-xs">
                                 确认: {formatDate(order.confirmedAt, 'short')}
                               </p>
                             )}
                             {order.productionStartedAt && (
-                              <p className="text-xs text-blue-600">
+                              <p className="text-blue-600 text-xs">
                                 生产: {formatDate(order.productionStartedAt, 'short')}
                               </p>
                             )}
                             {order.completedAt && (
-                              <p className="text-xs text-green-600">
+                              <p className="text-green-600 text-xs">
                                 完成: {formatDate(order.completedAt, 'short')}
                               </p>
                             )}
@@ -784,7 +784,7 @@ ${itemsDetails}
                             {getOrderStatusText(order.status)}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="mt-2 text-gray-600 text-sm">
                           {(order.items || []).length} 个商品 | {formatPrice(order.totalAmount)} | 对账单确认
                         </p>
                       </div>
@@ -795,7 +795,7 @@ ${itemsDetails}
                               size="sm"
                               onClick={() => handleUpdateOrderStatus(order.id, 'confirmed')}
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
+                              <CheckCircle className="mr-1 h-4 w-4" />
                               确认订单
                             </Button>
                             <Button
@@ -803,7 +803,7 @@ ${itemsDetails}
                               variant="outline"
                               onClick={() => handleEditOrder(order)}
                             >
-                              <Edit className="h-4 w-4 mr-1" />
+                              <Edit className="mr-1 h-4 w-4" />
                               编辑订单
                             </Button>
                           </>
@@ -814,7 +814,7 @@ ${itemsDetails}
                               size="sm"
                               onClick={() => handleUpdateOrderStatus(order.id, 'production')}
                             >
-                              <Package className="h-4 w-4 mr-1" />
+                              <Package className="mr-1 h-4 w-4" />
                               开始生产
                             </Button>
                             <Button
@@ -822,7 +822,7 @@ ${itemsDetails}
                               variant="outline"
                               onClick={() => handleEditOrder(order)}
                             >
-                              <Calendar className="h-4 w-4 mr-1" />
+                              <Calendar className="mr-1 h-4 w-4" />
                               回复交期
                             </Button>
                           </>
@@ -833,7 +833,7 @@ ${itemsDetails}
                               size="sm"
                               onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
                             >
-                              <Truck className="h-4 w-4 mr-1" />
+                              <Truck className="mr-1 h-4 w-4" />
                               完成订单
                             </Button>
                             <Button
@@ -841,14 +841,14 @@ ${itemsDetails}
                               variant="outline"
                               onClick={() => handleNotifyCustomer(order)}
                             >
-                              <Bell className="h-4 w-4 mr-1" />
+                              <Bell className="mr-1 h-4 w-4" />
                               通知出货
                             </Button>
                           </>
                         )}
                         <Link href={`/orders/${order.id}`}>
                           <Button variant="outline" size="sm">
-                            <FileText className="h-4 w-4 mr-1" />
+                            <FileText className="mr-1 h-4 w-4" />
                             查看详情
                           </Button>
                         </Link>
@@ -863,12 +863,12 @@ ${itemsDetails}
                           >
                             {generatingContract === order.id ? (
                               <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
+                                <div className="mr-1 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
                                 生成中...
                               </>
                             ) : (
                               <>
-                                <FilePlus className="h-4 w-4 mr-1" />
+                                <FilePlus className="mr-1 h-4 w-4" />
                                 生成合同
                               </>
                             )}
@@ -878,7 +878,7 @@ ${itemsDetails}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4 mr-1" />
+                                <Trash2 className="mr-1 h-4 w-4" />
                                 删除
                               </Button>
                             </AlertDialogTrigger>
@@ -914,18 +914,18 @@ ${itemsDetails}
           <TabsContent value="products">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <CardTitle>产品管理</CardTitle>
                   <div className="space-x-2">
                     <Link href="/admin/products/upload">
                       <Button>
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="mr-2 h-4 w-4" />
                         批量上传
                       </Button>
                     </Link>
                     <Link href="/admin/products/edit">
                       <Button variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
+                        <Edit className="mr-2 h-4 w-4" />
                         详细编辑
                       </Button>
                     </Link>
@@ -934,12 +934,12 @@ ${itemsDetails}
               </CardHeader>
               <CardContent>
                 {(!products || products.length === 0) ? (
-                  <div className="text-center py-8">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">暂无产品数据</p>
+                  <div className="py-8 text-center">
+                    <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                    <p className="mb-4 text-gray-600">暂无产品数据</p>
                     <Link href="/admin/products/upload">
                       <Button>
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className="mr-2 h-4 w-4" />
                         上传产品
                       </Button>
                     </Link>
@@ -947,14 +947,14 @@ ${itemsDetails}
                 ) : (
                   <div className="space-y-4">
                     {(products || []).map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={product.id} className="flex items-center justify-between rounded-lg border p-4">
                         <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100">
                             {product.image ? (
                               <img 
                                 src={product.image} 
                                 alt={product.productCode}
-                                className="w-full h-full object-cover rounded-lg"
+                                className="h-full w-full rounded-lg object-cover"
                               />
                             ) : (
                               <Package className="h-8 w-8 text-gray-400" />
@@ -962,13 +962,13 @@ ${itemsDetails}
                           </div>
                           <div>
                             <p className="font-medium">{product.productCode}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-gray-600 text-sm">
                               {product.category} - {product.subCategory}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-gray-600 text-sm">
                               价格: {formatPrice(product.unitPrice)} | 起订: {product.minimumOrderQty}件
                             </p>
-                            <div className="flex gap-1 mt-1">
+                            <div className="mt-1 flex gap-1">
                               {(product.targetCustomers || []).map(type => (
                                 <Badge key={type} variant="outline" className="text-xs">
                                   {type}
@@ -988,13 +988,13 @@ ${itemsDetails}
                             disabled={togglingProductId === product.id}
                           >
                             {togglingProductId === product.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
                             ) : null}
                             {product.isActive ? '禁用' : '启用'}
                           </Button>
                           <Link href={`/admin/products/edit`}>
                             <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
+                              <Edit className="mr-1 h-4 w-4" />
                               编辑
                             </Button>
                           </Link>
@@ -1011,7 +1011,7 @@ ${itemsDetails}
           <TabsContent value="customers">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <CardTitle>客户管理</CardTitle>
                   <Button onClick={() => {
                     setNewUserData({
@@ -1025,7 +1025,7 @@ ${itemsDetails}
                     });
                     setIsAddUserDialogOpen(true);
                   }}>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="mr-2 h-4 w-4" />
                     添加客户
                   </Button>
                 </div>
@@ -1033,14 +1033,14 @@ ${itemsDetails}
               <CardContent>
                 <div className="space-y-4">
                   {(customers || []).map(customer => (
-                    <div key={customer.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={customer.id} className="flex items-center justify-between rounded-lg border p-4">
                       <div>
                         <p className="font-medium">{customer.profile.name}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-gray-600 text-sm">
                           {customer.email} | {customer.profile.company || '个人客户'}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm text-gray-600">
+                        <div className="mt-1 flex items-center gap-2">
+                          <p className="text-gray-600 text-sm">
                             注册时间: {customer.createdAt ? formatDate(customer.createdAt, 'short') : '未知'}
                           </p>
                           {customer.customerType && (
@@ -1055,7 +1055,7 @@ ${itemsDetails}
                           {customer.isActive ? '活跃' : '禁用'}
                         </Badge>
                         <Button variant="outline" size="sm" onClick={() => handleEditCustomer(customer)}>
-                          <Edit className="h-4 w-4 mr-1" />
+                          <Edit className="mr-1 h-4 w-4" />
                           编辑
                         </Button>
                       </div>
@@ -1070,11 +1070,11 @@ ${itemsDetails}
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <CardTitle>用户管理</CardTitle>
                   <div className="space-x-2">
                     <Button variant="outline" onClick={() => handleEditAdmin()}>
-                      <Edit className="h-4 w-4 mr-2" />
+                      <Edit className="mr-2 h-4 w-4" />
                       编辑我的账户
                     </Button>
                     <Button onClick={() => {
@@ -1089,7 +1089,7 @@ ${itemsDetails}
                       });
                       setIsAddUserDialogOpen(true);
                     }}>
-                      <UserPlus className="h-4 w-4 mr-2" />
+                      <UserPlus className="mr-2 h-4 w-4" />
                       添加用户
                     </Button>
                   </div>
@@ -1100,13 +1100,13 @@ ${itemsDetails}
                   {[user, ...(customers || []).slice(0, 5)]
                     .filter(userItem => userItem && userItem.createdAt) // 过滤掉无效的用户数据
                     .map(userItem => (
-                    <div key={userItem.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={userItem.id} className="flex items-center justify-between rounded-lg border p-4">
                       <div>
                         <p className="font-medium">{userItem.profile.name}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-gray-600 text-sm">
                           {userItem.email} | {userItem.role === 'admin' ? '管理员' : '普通用户'}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-gray-600 text-sm">
                           创建时间: {userItem.createdAt ? formatDate(userItem.createdAt, 'short') : '未知'}
                         </p>
                       </div>
@@ -1116,12 +1116,12 @@ ${itemsDetails}
                         </Badge>
                         {userItem.id === user?.id ? (
                           <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
-                            <Edit className="h-4 w-4 mr-1" />
+                            <Edit className="mr-1 h-4 w-4" />
                             编辑
                           </Button>
                         ) : (
                           <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
-                            <Edit className="h-4 w-4 mr-1" />
+                            <Edit className="mr-1 h-4 w-4" />
                             编辑
                           </Button>
                         )}
@@ -1144,32 +1144,32 @@ ${itemsDetails}
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="text-center py-8">
-                    <Shield className="h-16 w-16 text-red-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">系统安全监控</h3>
-                    <p className="text-gray-600 mb-6">
+                  <div className="py-8 text-center">
+                    <Shield className="mx-auto mb-4 h-16 w-16 text-red-600" />
+                    <h3 className="mb-2 font-medium text-gray-900 text-lg">系统安全监控</h3>
+                    <p className="mb-6 text-gray-600">
                       管理登录安全、会话控制和IP访问限制
                     </p>
                     <Link href="/admin/security">
                       <Button size="lg" className="bg-red-600 hover:bg-red-700">
-                        <Shield className="h-4 w-4 mr-2" />
+                        <Shield className="mr-2 h-4 w-4" />
                         进入安全管理
                       </Button>
                     </Link>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <div className="text-2xl font-bold text-red-600">IP限制</div>
-                      <div className="text-sm text-gray-600 mt-1">单IP登录保护</div>
+                  <div className="grid grid-cols-1 gap-4 border-t pt-6 md:grid-cols-3">
+                    <div className="rounded-lg bg-red-50 p-4 text-center">
+                      <div className="font-bold text-2xl text-red-600">IP限制</div>
+                      <div className="mt-1 text-gray-600 text-sm">单IP登录保护</div>
                     </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <div className="text-2xl font-bold text-yellow-600">防暴力破解</div>
-                      <div className="text-sm text-gray-600 mt-1">登录尝试限制</div>
+                    <div className="rounded-lg bg-yellow-50 p-4 text-center">
+                      <div className="font-bold text-2xl text-yellow-600">防暴力破解</div>
+                      <div className="mt-1 text-gray-600 text-sm">登录尝试限制</div>
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">会话管理</div>
-                      <div className="text-sm text-gray-600 mt-1">实时会话监控</div>
+                    <div className="rounded-lg bg-green-50 p-4 text-center">
+                      <div className="font-bold text-2xl text-green-600">会话管理</div>
+                      <div className="mt-1 text-gray-600 text-sm">实时会话监控</div>
                     </div>
                   </div>
                 </div>
@@ -1193,30 +1193,30 @@ ${itemsDetails}
                 <CardContent>
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-medium mb-4">基本设置</h3>
+                      <h3 className="mb-4 font-medium text-lg">基本设置</h3>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">系统名称</label>
-                          <p className="text-sm text-gray-600">攀岩墙定制系统</p>
+                          <label className="mb-2 block font-medium text-sm">系统名称</label>
+                          <p className="text-gray-600 text-sm">攀岩墙定制系统</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">系统版本</label>
-                          <p className="text-sm text-gray-600">v1.0.0</p>
+                          <label className="mb-2 block font-medium text-sm">系统版本</label>
+                          <p className="text-gray-600 text-sm">v1.0.0</p>
                         </div>
                       </div>
                     </div>
                     
                     <div>
-                      <h3 className="text-lg font-medium mb-4">业务设置</h3>
+                      <h3 className="mb-4 font-medium text-lg">业务设置</h3>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">运费政策</label>
-                          <p className="text-sm text-gray-600">运费到付</p>
+                          <label className="mb-2 block font-medium text-sm">运费政策</label>
+                          <p className="text-gray-600 text-sm">运费到付</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">客服信息</label>
-                          <p className="text-sm text-gray-600">13632603365</p>
-                          <p className="text-sm text-gray-600">good-181@163.com</p>
+                          <label className="mb-2 block font-medium text-sm">客服信息</label>
+                          <p className="text-gray-600 text-sm">13632603365</p>
+                          <p className="text-gray-600 text-sm">good-181@163.com</p>
                         </div>
                       </div>
                     </div>
@@ -1238,12 +1238,12 @@ ${itemsDetails}
             <div className="space-y-4">
               <div>
                 <Label>订单号</Label>
-                <p className="text-sm text-gray-600">{editingOrder.orderNumber}</p>
+                <p className="text-gray-600 text-sm">{editingOrder.orderNumber}</p>
               </div>
               
               <div>
                 <Label>客户信息</Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-gray-600 text-sm">
                   {editingOrder.customerInfo.name} | {editingOrder.customerInfo.contact}
                 </p>
               </div>
@@ -1329,7 +1329,7 @@ ${itemsDetails}
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="font-medium mb-2">修改密码（可选）</h4>
+                <h4 className="mb-2 font-medium">修改密码（可选）</h4>
                 <div className="space-y-2">
                   <div>
                     <Label htmlFor="oldPassword">当前密码</Label>
@@ -1593,7 +1593,7 @@ ${itemsDetails}
                 id="newUserRole"
                 value={newUserData.role}
                 onChange={(e) => setNewUserData({...newUserData, role: e.target.value as 'admin' | 'customer'})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="customer">普通用户</option>
                 <option value="admin">管理员</option>

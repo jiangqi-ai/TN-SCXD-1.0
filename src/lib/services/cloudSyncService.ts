@@ -94,6 +94,7 @@ export const cloudSyncService = {
     }
 
     if (!config.binId) {
+      console.log('⚠️ 未设置云存储ID，将尝试从本地数据初始化云端存储');
       throw new Error('未设置云存储ID，请先上传数据到云端');
     }
 
@@ -192,7 +193,7 @@ export const cloudSyncService = {
     }
   },
 
-  // 同步本地数据到云端
+  // 同步本地数据到云端  
   syncToCloud: async (products: Product[]): Promise<void> => {
     if (!cloudSyncService.isCloudSyncEnabled()) {
       console.log('⚠️ 云同步未启用，跳过同步');

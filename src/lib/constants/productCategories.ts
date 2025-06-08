@@ -1,4 +1,4 @@
-import type { ProductCategory, ProductSubCategory, CustomerType } from '@/types';
+import type { CustomerType, ProductCategory, ProductSubCategory } from '@/types';
 
 // 产品主分类
 export const PRODUCT_CATEGORIES: ProductCategory[] = [

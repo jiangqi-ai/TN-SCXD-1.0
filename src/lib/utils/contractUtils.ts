@@ -1,7 +1,7 @@
-import type { Order, Contract, OrderItem } from '@/types';
-import { formatPrice, formatDate, generateId } from './helpers';
-import jsPDF from 'jspdf';
+import type { Contract, Order, OrderItem } from '@/types';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { formatDate, formatPrice, generateId } from './helpers';
 
 // 默认合同条款模板
 const DEFAULT_CONTRACT_TERMS = `

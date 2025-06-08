@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useAuthStore } from '@/store/useAuthStore';
 import type { CartItem, Product } from '@/types';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/store/useAuthStore';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface CartState {
   items: CartItem[];

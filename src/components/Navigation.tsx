@@ -1,19 +1,19 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { ShoppingCart, User, Package, LogOut, Settings, FileText } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
+import { FileText, LogOut, Package, Settings, ShoppingCart, User } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 export default function Navigation() {
@@ -28,27 +28,27 @@ export default function Navigation() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header className="border-b bg-white shadow-sm">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Package className="h-8 w-8 text-primary" />
-              <h1 className="ml-2 text-xl font-bold text-gray-900">攀岩定制系统</h1>
+              <h1 className="ml-2 font-bold text-gray-900 text-xl">攀岩定制系统</h1>
             </Link>
           </div>
           
-          <nav className="hidden md:flex space-x-8">
-            <Link href="/products" className="text-gray-700 hover:text-primary transition-colors">
+          <nav className="hidden space-x-8 md:flex">
+            <Link href="/products" className="text-gray-700 transition-colors hover:text-primary">
               产品中心
             </Link>
             {isAuthenticated && (
-              <Link href="/orders" className="text-gray-700 hover:text-primary transition-colors">
+              <Link href="/orders" className="text-gray-700 transition-colors hover:text-primary">
                 我的订单
               </Link>
             )}
             {user?.role === 'admin' && (
-              <Link href="/admin" className="text-gray-700 hover:text-primary transition-colors">
+              <Link href="/admin" className="text-gray-700 transition-colors hover:text-primary">
                 管理后台
               </Link>
             )}
@@ -62,7 +62,7 @@ export default function Navigation() {
                   <Button variant="outline" size="sm">
                     <ShoppingCart className="h-4 w-4" />
                     {getTotalItems() > 0 && (
-                      <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                      <Badge className="-top-2 -right-2 absolute flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
                         {getTotalItems()}
                       </Badge>
                     )}
@@ -73,29 +73,29 @@ export default function Navigation() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <User className="h-4 w-4 mr-2" />
+                      <User className="mr-2 h-4 w-4" />
                       {user?.profile.name}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <div className="px-2 py-1.5 text-sm font-medium">
+                    <div className="px-2 py-1.5 font-medium text-sm">
                       {user?.profile.name}
                     </div>
-                    <div className="px-2 py-1.5 text-xs text-gray-500">
+                    <div className="px-2 py-1.5 text-gray-500 text-xs">
                       {user?.email}
                     </div>
                     <DropdownMenuSeparator />
                     
                     <DropdownMenuItem asChild>
                       <Link href="/orders" className="w-full">
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="mr-2 h-4 w-4" />
                         我的订单
                       </Link>
                     </DropdownMenuItem>
                     
                     <DropdownMenuItem asChild>
                       <Link href="/cart" className="w-full">
-                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        <ShoppingCart className="mr-2 h-4 w-4" />
                         购物车 {getTotalItems() > 0 && `(${getTotalItems()})`}
                       </Link>
                     </DropdownMenuItem>
@@ -105,7 +105,7 @@ export default function Navigation() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link href="/admin" className="w-full">
-                            <Settings className="h-4 w-4 mr-2" />
+                            <Settings className="mr-2 h-4 w-4" />
                             管理后台
                           </Link>
                         </DropdownMenuItem>
@@ -114,7 +114,7 @@ export default function Navigation() {
 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 mr-2" />
+                      <LogOut className="mr-2 h-4 w-4" />
                       退出登录
                     </DropdownMenuItem>
                   </DropdownMenuContent>

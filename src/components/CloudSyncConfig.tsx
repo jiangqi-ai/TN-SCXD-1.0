@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Cloud, CloudOff, Key, Upload, Download, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react'
 import { cloudSyncService } from '@/lib/services/cloudSyncService'
 import { productService } from '@/lib/services/productService'
+import { AlertTriangle, CheckCircle, Cloud, CloudOff, Download, ExternalLink, Key, Upload } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export default function CloudSyncConfig() {
@@ -108,7 +108,7 @@ export default function CloudSyncConfig() {
         {/* 状态显示 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">云同步状态</span>
+            <span className="font-medium text-sm">云同步状态</span>
             <Badge variant={config.enabled ? "default" : "secondary"}>
               {config.enabled ? '已启用' : '未启用'}
             </Badge>
@@ -132,7 +132,7 @@ export default function CloudSyncConfig() {
               <Key className="h-4 w-4" />
               JSONBin.io API Key
             </Label>
-            <div className="flex gap-2 mt-1">
+            <div className="mt-1 flex gap-2">
               <Input
                 id="apiKey"
                 type="password"
@@ -148,16 +148,16 @@ export default function CloudSyncConfig() {
                 {isConfiguring ? '保存中...' : '保存'}
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-gray-500 text-xs">
               获取免费API Key: 
               <a 
                 href="https://jsonbin.io" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline ml-1"
+                className="ml-1 text-blue-500 hover:underline"
               >
                 jsonbin.io
-                <ExternalLink className="h-3 w-3 inline ml-1" />
+                <ExternalLink className="ml-1 inline h-3 w-3" />
               </a>
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function CloudSyncConfig() {
           {config.binId && (
             <div>
               <Label>云存储ID</Label>
-              <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+              <div className="rounded bg-gray-50 p-2 text-gray-600 text-sm">
                 {config.binId}
               </div>
             </div>
@@ -174,9 +174,9 @@ export default function CloudSyncConfig() {
 
         {/* 云端信息 */}
         {config.enabled && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">云端状态</h4>
-            <div className="space-y-2 text-sm text-blue-700">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h4 className="mb-2 font-medium text-blue-800 text-sm">云端状态</h4>
+            <div className="space-y-2 text-blue-700 text-sm">
               {cloudLastUpdate ? (
                 <p className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" />
@@ -205,12 +205,12 @@ export default function CloudSyncConfig() {
               >
                 {isUploading ? (
                   <>
-                    <Upload className="h-4 w-4 mr-2 animate-pulse" />
+                    <Upload className="mr-2 h-4 w-4 animate-pulse" />
                     上传中...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="mr-2 h-4 w-4" />
                     上传到云端
                   </>
                 )}
@@ -225,19 +225,19 @@ export default function CloudSyncConfig() {
               >
                 {isDownloading ? (
                   <>
-                    <Download className="h-4 w-4 mr-2 animate-pulse" />
+                    <Download className="mr-2 h-4 w-4 animate-pulse" />
                     下载中...
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="mr-2 h-4 w-4" />
                     从云端下载
                   </>
                 )}
               </Button>
             </div>
             
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
               <p className="text-xs text-yellow-800">
                 <strong>说明:</strong> 管理员修改产品后会自动同步到云端，客户端会在加载时自动获取最新数据。
                 手动操作仅在特殊情况下使用。
@@ -248,9 +248,9 @@ export default function CloudSyncConfig() {
 
         {/* 使用说明 */}
         {!config.enabled && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-800 mb-2">如何启用云同步</h4>
-            <ol className="text-xs text-gray-600 space-y-1">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 className="mb-2 font-medium text-gray-800 text-sm">如何启用云同步</h4>
+            <ol className="space-y-1 text-gray-600 text-xs">
               <li>1. 访问 <a href="https://jsonbin.io" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">jsonbin.io</a> 注册免费账户</li>
               <li>2. 获取 API Key（免费额度足够使用）</li>
               <li>3. 在上方输入框填入 API Key 并保存</li>

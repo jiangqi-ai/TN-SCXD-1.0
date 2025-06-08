@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { RefreshCw, AlertTriangle, CheckCircle, Database } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { dataSyncUtils } from '@/lib/services/mockDataService'
+import { AlertTriangle, CheckCircle, Database, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface SyncStatus {
@@ -65,8 +65,8 @@ export default function DataSyncStatus() {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-500">正在检查数据同步状态...</p>
+          <RefreshCw className="mx-auto mb-2 h-6 w-6 animate-spin" />
+          <p className="text-gray-500 text-sm">正在检查数据同步状态...</p>
         </CardContent>
       </Card>
     )
@@ -86,12 +86,12 @@ export default function DataSyncStatus() {
             {syncStatus.synchronized ? (
               <>
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-sm font-medium">数据已同步</span>
+                <span className="font-medium text-sm">数据已同步</span>
               </>
             ) : (
               <>
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
-                <span className="text-sm font-medium">数据需要同步</span>
+                <span className="font-medium text-sm">数据需要同步</span>
               </>
             )}
           </div>
@@ -101,21 +101,21 @@ export default function DataSyncStatus() {
         </div>
 
         {syncStatus.reason && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <p className="text-sm text-orange-800">
+          <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+            <p className="text-orange-800 text-sm">
               <strong>原因:</strong> {syncStatus.reason}
             </p>
           </div>
         )}
 
         {syncStatus.lastSyncTime && (
-          <div className="text-sm text-gray-600">
+          <div className="text-gray-600 text-sm">
             <strong>最后同步:</strong> {syncStatus.lastSyncTime}
           </div>
         )}
 
         {syncStatus.version && (
-          <div className="text-sm text-gray-600">
+          <div className="text-gray-600 text-sm">
             <strong>数据版本:</strong> {syncStatus.version}
           </div>
         )}
@@ -127,7 +127,7 @@ export default function DataSyncStatus() {
             onClick={checkSyncStatus}
             className="text-xs"
           >
-            <RefreshCw className="h-3 w-3 mr-1" />
+            <RefreshCw className="mr-1 h-3 w-3" />
             检查状态
           </Button>
           
@@ -149,7 +149,7 @@ export default function DataSyncStatus() {
           >
             {isResetting ? (
               <>
-                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
                 重置中...
               </>
             ) : (
@@ -159,8 +159,8 @@ export default function DataSyncStatus() {
         </div>
 
         {!syncStatus.synchronized && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <p className="text-blue-800 text-sm">
               <strong>建议操作:</strong> 如果多个用户报告数据不同步，建议使用"重置数据"功能统一所有数据到最新状态。
             </p>
           </div>

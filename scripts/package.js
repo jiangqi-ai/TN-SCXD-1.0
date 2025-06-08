@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import archiver from 'archiver';
 import { fileURLToPath } from 'url';
+import archiver from 'archiver';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

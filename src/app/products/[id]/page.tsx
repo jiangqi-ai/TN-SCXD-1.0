@@ -1,26 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import Navigation from '@/components/Navigation';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft, 
-  Star, 
-  ShoppingCart, 
-  Package, 
-  Shield, 
-  Phone 
-} from 'lucide-react';
-import { useAuthStore } from '@/store/useAuthStore';
-import { useCartStore } from '@/store/useCartStore';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { productService } from '@/lib/services/productService';
 import { formatPrice } from '@/lib/utils/helpers';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useCartStore } from '@/store/useCartStore';
 import type { Product } from '@/types';
+import { 
+  ArrowLeft, 
+  Package, 
+  Phone, 
+  Shield, 
+  ShoppingCart, 
+  Star 
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import Navigation from '@/components/Navigation';
 
 interface ProductDetailPageProps {
   params: Promise<{
@@ -90,14 +90,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="animate-pulse">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-              <div className="aspect-square bg-gray-200 rounded-lg"></div>
+            <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
+              <div className="aspect-square rounded-lg bg-gray-200"></div>
               <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded"></div>
-                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-8 rounded bg-gray-200"></div>
+                <div className="h-6 w-2/3 rounded bg-gray-200"></div>
+                <div className="h-10 w-1/2 rounded bg-gray-200"></div>
               </div>
             </div>
           </div>
@@ -114,30 +114,30 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         {/* 返回按钮 */}
         <div className="mb-4 sm:mb-6">
           <Link href="/products">
             <Button variant="outline" size="sm" className="text-sm sm:text-base">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               返回产品列表
             </Button>
           </Link>
         </div>
 
         {/* 产品主要信息 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
           {/* 产品图片 */}
           <div className="space-y-4">
-            <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
+            <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
               {product.image ? (
                 <img
                   src={product.image}
                   alt={product.productCode}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="flex h-full w-full items-center justify-center text-gray-400">
                   <Package className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24" />
                 </div>
               )}
@@ -147,19 +147,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           {/* 产品信息 */}
           <div className="space-y-4 sm:space-y-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-gray-900 mb-2">{product.productCode}</h1>
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <h1 className="mb-2 font-bold text-2xl text-gray-900 sm:text-3xl lg:text-3xl">{product.productCode}</h1>
+              <div className="mb-3 flex items-center gap-2 sm:mb-4">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
+                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400 sm:h-4 sm:w-4" />
                   ))}
-                  <span className="ml-2 text-xs sm:text-sm text-gray-600">(5.0 评分)</span>
+                  <span className="ml-2 text-gray-600 text-xs sm:text-sm">(5.0 评分)</span>
                 </div>
               </div>
               
-              <div className="text-2xl sm:text-3xl lg:text-3xl font-bold text-primary mb-4 sm:mb-6">
+              <div className="mb-4 font-bold text-2xl text-primary sm:mb-6 sm:text-3xl lg:text-3xl">
                 {formatPrice(product.unitPrice * quantity)}
-                <span className="text-base sm:text-lg text-gray-600 font-normal ml-2">
+                <span className="ml-2 font-normal text-base text-gray-600 sm:text-lg">
                   (单价: {formatPrice(product.unitPrice)})
                 </span>
               </div>
@@ -168,8 +168,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             {/* 产品规格 */}
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <h3 className="text-base sm:text-lg font-medium mb-2">产品规格</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base">
+                <h3 className="mb-2 font-medium text-base sm:text-lg">产品规格</h3>
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4 sm:text-base">
                   <div>
                     <span className="text-gray-600">重量:</span>
                     <span className="ml-2 font-medium">{product.weight}kg</span>
@@ -191,16 +191,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               {/* 颜色选择 */}
               <div>
-                <label className="text-base sm:text-lg font-medium mb-2 block">颜色选择:</label>
+                <label className="mb-2 block font-medium text-base sm:text-lg">颜色选择:</label>
                 <div className="flex flex-wrap gap-2">
                   {product.availableColors.map(color => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-3 py-2 sm:px-4 sm:py-2 rounded-md border transition-colors text-sm sm:text-base ${
+                      className={`rounded-md border px-3 py-2 text-sm transition-colors sm:px-4 sm:py-2 sm:text-base ${
                         selectedColor === color
-                          ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                          ? "border-primary bg-primary text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-primary"
                       }`}
                     >
                       {color}
@@ -211,16 +211,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               {/* 尺寸选择 */}
               <div>
-                <label className="text-base sm:text-lg font-medium mb-2 block">尺寸选择:</label>
+                <label className="mb-2 block font-medium text-base sm:text-lg">尺寸选择:</label>
                 <div className="flex flex-wrap gap-2">
                   {product.availableDimensions.map(dimension => (
                     <button
                       key={dimension}
                       onClick={() => setSelectedDimension(dimension)}
-                      className={`px-3 py-2 sm:px-4 sm:py-2 rounded-md border transition-colors text-sm sm:text-base ${
+                      className={`rounded-md border px-3 py-2 text-sm transition-colors sm:px-4 sm:py-2 sm:text-base ${
                         selectedDimension === dimension
-                          ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                          ? "border-primary bg-primary text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-primary"
                       }`}
                     >
                       {dimension}
@@ -231,29 +231,29 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               {/* 数量选择 */}
               <div>
-                <label className="text-base sm:text-lg font-medium mb-2 block">购买数量:</label>
+                <label className="mb-2 block font-medium text-base sm:text-lg">购买数量:</label>
                 <div className="flex items-center gap-3">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setQuantity(Math.max(product.minimumOrderQty, quantity - 1))}
                     disabled={quantity <= product.minimumOrderQty}
-                    className="h-8 w-8 sm:h-10 sm:w-10 p-0"
+                    className="h-8 w-8 p-0 sm:h-10 sm:w-10"
                   >
                     -
                   </Button>
-                  <span className="px-3 py-2 sm:px-4 sm:py-2 border rounded text-center min-w-12 sm:min-w-16 font-medium text-sm sm:text-base">
+                  <span className="min-w-12 rounded border px-3 py-2 text-center font-medium text-sm sm:min-w-16 sm:px-4 sm:py-2 sm:text-base">
                     {quantity}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setQuantity(quantity + 1)}
-                    className="h-8 w-8 sm:h-10 sm:w-10 p-0"
+                    className="h-8 w-8 p-0 sm:h-10 sm:w-10"
                   >
                     +
                   </Button>
-                  <span className="text-xs sm:text-sm text-gray-600 ml-2">
+                  <span className="ml-2 text-gray-600 text-xs sm:text-sm">
                     (最低起订 {product.minimumOrderQty} 件)
                   </span>
                 </div>
@@ -267,7 +267,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   onClick={handleAddToCart}
                   disabled={!isAuthenticated}
                 >
-                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <ShoppingCart className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   {isAuthenticated ? '加入购物车' : '请先登录'}
                 </Button>
               </div>
@@ -275,18 +275,18 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
             {/* 服务保障 */}
             <div className="border-t pt-4 sm:pt-6">
-              <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">服务保障</h3>
+              <h3 className="mb-3 font-medium text-base sm:mb-4 sm:text-lg">服务保障</h3>
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center">
-                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-3" />
+                  <Shield className="mr-3 h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
                   <span className="text-sm sm:text-base">质量保证，有问题随时更换</span>
                 </div>
                 <div className="flex items-center">
-                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-3" />
+                  <Phone className="mr-3 h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
                   <span className="text-sm sm:text-base">客服电话：13632603365</span>
                 </div>
                 <div className="flex items-center">
-                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-3" />
+                  <Phone className="mr-3 h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
                   <span className="text-sm sm:text-base">客服邮箱：good-181@163.com</span>
                 </div>
               </div>
@@ -302,14 +302,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none">
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                <p className="text-gray-600 text-sm leading-relaxed sm:text-base">
                   {product.productCode} 是我们精心设计的攀岩装备产品，采用高质量材料制作而成。
                   适用于各种攀岩环境和难度等级，为攀岩爱好者提供可靠的安全保障和优秀的使用体验。
                 </p>
                 {product.features && product.features.length > 0 && (
                   <>
-                    <h4 className="text-base sm:text-lg font-medium mt-4 sm:mt-6 mb-2 sm:mb-3">产品特点</h4>
-                    <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-sm sm:text-base text-gray-600">
+                    <h4 className="mt-4 mb-2 font-medium text-base sm:mt-6 sm:mb-3 sm:text-lg">产品特点</h4>
+                    <ul className="list-inside list-disc space-y-1 text-gray-600 text-sm sm:space-y-2 sm:text-base">
                       {product.features.map((feature, index) => (
                         <li key={index}>{feature}</li>
                       ))}
@@ -318,8 +318,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 )}
                 {product.applications && (
                   <>
-                    <h4 className="text-base sm:text-lg font-medium mt-4 sm:mt-6 mb-2 sm:mb-3">适用场景</h4>
-                    <p className="text-sm sm:text-base text-gray-600">
+                    <h4 className="mt-4 mb-2 font-medium text-base sm:mt-6 sm:mb-3 sm:text-lg">适用场景</h4>
+                    <p className="text-gray-600 text-sm sm:text-base">
                       {product.applications}
                     </p>
                   </>
