@@ -54,7 +54,7 @@ export default function ProductUploadPage() {
         '产品编号': 'BOX-001',
         '主分类': '攀岩板材',
         '子分类': '高密度攀岩板',
-        '目标客户': 'OEM,品牌客户',
+        '目标客户': 'OEM客户,品牌客户',
         '图片': '',
         '可选尺寸': '20cm x 15cm x 10cm, 30cm x 30cm x 5cm',
         '重量': 0.8,
@@ -64,7 +64,23 @@ export default function ProductUploadPage() {
         '销售价格（不含运，不含税）': 85.00,
         '可打折': '是',
         '最大折扣(%)': 15,
-        '备注': '示例产品说明'
+        '备注': '针对特定客户类型的产品'
+      },
+      {
+        '产品编号': 'BOX-002',
+        '主分类': '岩点',
+        '子分类': 'PE灌浆点',
+        '目标客户': '',
+        '图片': '',
+        '可选尺寸': '15cm x 15cm x 8cm',
+        '重量': 0.5,
+        '包含个数': 30,
+        '订单数量': 5,
+        '颜色': '红色, 蓝色, 绿色',
+        '销售价格（不含运，不含税）': 45.00,
+        '可打折': '否',
+        '最大折扣(%)': 0,
+        '备注': '通用产品，所有客户都可见（目标客户留空）'
       }
     ];
 
@@ -139,16 +155,18 @@ export default function ProductUploadPage() {
               subCategory = subCategoryStr as ProductSubCategory;
             }
 
-            // 验证目标客户
+            // 验证目标客户（可以为空，表示所有客户都可见）
             const targetCustomersStr = (row as any).目标客户 || '';
             const targetCustomers: CustomerType[] = [];
-            if (targetCustomersStr) {
-              const customerList = targetCustomersStr.split(',').map((c: string) => c.trim());
+            if (targetCustomersStr.trim()) {
+              const customerList = targetCustomersStr.split(',').map((c: string) => c.trim()).filter((c: string) => c);
               for (const customerType of customerList) {
                 if (!isValidCustomerType(customerType)) {
-                  throw new Error(`第 ${index + 2} 行目标客户"${customerType}"无效。有效值：${CUSTOMER_TYPES.join(', ')}`);
+                  throw new Error(`第 ${index + 2} 行目标客户"${customerType}"无效。有效值：${CUSTOMER_TYPES.join(', ')}，或留空表示所有客户可见`);
                 }
-                targetCustomers.push(customerType as CustomerType);
+                if (!targetCustomers.includes(customerType as CustomerType)) {
+                  targetCustomers.push(customerType as CustomerType);
+                }
               }
             }
 
@@ -203,9 +221,7 @@ export default function ProductUploadPage() {
             if (product.availableColors.length === 0) {
               throw new Error(`第 ${index + 2} 行颜色不能为空`);
             }
-            if (product.targetCustomers.length === 0) {
-              throw new Error(`第 ${index + 2} 行目标客户不能为空`);
-            }
+            // 目标客户可以为空，表示所有客户都可以看到此产品
 
             products.push(product);
           } catch (error) {

@@ -60,11 +60,19 @@ export const productService = {
     const products = storage.getProducts();
     let filteredProducts = products.filter(p => p.isActive);
     
-    if (customerType) {
-      filteredProducts = filteredProducts.filter(p => 
-        p.targetCustomers.includes(customerType)
-      );
+    // 优化权限逻辑：
+    // 1. 如果没有客户类型（未登录或未分类），显示所有产品
+    // 2. 如果有客户类型，显示匹配的产品 + 没有指定目标客户的产品（通用产品）
+    // 3. 如果客户类型是"未分类"，显示所有产品
+    if (customerType && customerType !== '未分类') {
+      filteredProducts = filteredProducts.filter(p => {
+        // 显示以下产品：
+        // 1. 目标客户包含当前客户类型的产品
+        // 2. 没有设置目标客户的产品（通用产品）
+        return p.targetCustomers.includes(customerType) || p.targetCustomers.length === 0;
+      });
     }
+    // 如果是未分类客户或没有客户类型，显示所有激活的产品
     
     return filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
