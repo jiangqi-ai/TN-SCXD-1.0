@@ -149,7 +149,7 @@ export const cloudSyncService = {
     };
 
     try {
-      let response;
+      let response: Response;
       let url = `${JSONBIN_BASE_URL}/b`;
       let method = 'POST';
 

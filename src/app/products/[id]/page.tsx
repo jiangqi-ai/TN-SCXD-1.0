@@ -93,11 +93,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="animate-pulse">
             <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
-              <div className="aspect-square rounded-lg bg-gray-200"></div>
+              <div className="aspect-square rounded-lg bg-gray-200" />
               <div className="space-y-4">
-                <div className="h-8 rounded bg-gray-200"></div>
-                <div className="h-6 w-2/3 rounded bg-gray-200"></div>
-                <div className="h-10 w-1/2 rounded bg-gray-200"></div>
+                <div className="h-8 rounded bg-gray-200" />
+                <div className="h-6 w-2/3 rounded bg-gray-200" />
+                <div className="h-10 w-1/2 rounded bg-gray-200" />
               </div>
             </div>
           </div>

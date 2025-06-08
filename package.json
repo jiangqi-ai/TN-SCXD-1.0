@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' next build",
+		"build": "next build",
 		"check": "biome check .",
 		"check:unsafe": "biome check --write --unsafe .",
 		"check:write": "biome check --write .",
@@ -13,7 +13,6 @@
 		"start": "next start",
 		"typecheck": "tsc --noEmit",
 		"clean": "rimraf .next out dist",
-		"prebuild": "npm run clean",
 		"package": "node scripts/package.js",
 		"deploy": "npm run build && npm run package"
 	},

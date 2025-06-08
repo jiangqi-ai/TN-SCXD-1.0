@@ -345,7 +345,7 @@ export default function OrdersPage() {
                       <Button variant="outline" size="sm" disabled={isExporting}>
                         {isExporting ? (
                           <>
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
                             导出中...
                           </>
                         ) : (
@@ -393,14 +393,14 @@ export default function OrdersPage() {
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="mb-2 h-6 w-3/4 rounded bg-gray-200"></div>
-                  <div className="h-4 w-1/2 rounded bg-gray-200"></div>
+                  <div className="mb-2 h-6 w-3/4 rounded bg-gray-200" />
+                  <div className="h-4 w-1/2 rounded bg-gray-200" />
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="h-4 rounded bg-gray-200"></div>
-                    <div className="h-4 w-5/6 rounded bg-gray-200"></div>
-                    <div className="h-4 w-4/6 rounded bg-gray-200"></div>
+                    <div className="h-4 rounded bg-gray-200" />
+                    <div className="h-4 w-5/6 rounded bg-gray-200" />
+                    <div className="h-4 w-4/6 rounded bg-gray-200" />
                   </div>
                 </CardContent>
               </Card>

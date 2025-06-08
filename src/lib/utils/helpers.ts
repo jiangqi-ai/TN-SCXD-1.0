@@ -22,7 +22,7 @@ export const formatDate = (date: Date | null | undefined, format: 'full' | 'shor
   
   // 确保是Date对象并且是有效的
   const dateObj = date instanceof Date ? date : new Date(date);
-  if (isNaN(dateObj.getTime())) return '无效日期';
+  if (Number.isNaN(dateObj.getTime())) return '无效日期';
   
   const optionsMap: Record<string, Intl.DateTimeFormatOptions> = {
     full: { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' },
@@ -112,7 +112,7 @@ export const parseColors = (colorString: string): string[] => {
 // 数字验证
 export const validateNumber = (value: any, fieldName: string, rowIndex?: number): number => {
   const num = Number(value);
-  if (isNaN(num) || num < 0) {
+  if (Number.isNaN(num) || num < 0) {
     const position = rowIndex !== undefined ? `第 ${rowIndex + 2} 行` : '';
     throw new Error(`${position}${fieldName}必须是有效的正数`);
   }

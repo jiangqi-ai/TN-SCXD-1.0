@@ -13,14 +13,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, FileText, Package, ShoppingCart, St
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-// 开发环境下导入数据同步工具
-if (process.env.NODE_ENV === 'development') {
-	import('@/lib/services/mockDataService').then((module) => {
-		if (typeof window !== 'undefined') {
-			(window as any).dataSync = module.dataSyncUtils;
-		}
-	});
-}
+// 生产环境下移除调试工具
 
 /**
  * @description 这只是个示例页面，你可以随意修改这个页面或进行全面重构
@@ -158,14 +151,14 @@ export default function HomePage() {
 							{[...Array(4)].map((_, i) => (
 								<Card key={i} className="animate-pulse">
 									<CardHeader>
-										<div className="mb-3 aspect-square rounded-lg bg-gray-200"></div>
-										<div className="h-4 rounded bg-gray-200"></div>
+										<div className="mb-3 aspect-square rounded-lg bg-gray-200" />
+										<div className="h-4 rounded bg-gray-200" />
 									</CardHeader>
 									<CardContent>
 										<div className="space-y-2">
-											<div className="h-3 rounded bg-gray-200"></div>
-											<div className="h-3 rounded bg-gray-200"></div>
-											<div className="h-3 w-2/3 rounded bg-gray-200"></div>
+											<div className="h-3 rounded bg-gray-200" />
+											<div className="h-3 rounded bg-gray-200" />
+											<div className="h-3 w-2/3 rounded bg-gray-200" />
 										</div>
 									</CardContent>
 								</Card>

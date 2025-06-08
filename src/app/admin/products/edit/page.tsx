@@ -244,14 +244,14 @@ export default function ProductEditPage() {
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="mb-3 aspect-square rounded-lg bg-gray-200"></div>
-                  <div className="h-4 rounded bg-gray-200"></div>
+                  <div className="mb-3 aspect-square rounded-lg bg-gray-200" />
+                  <div className="h-4 rounded bg-gray-200" />
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="h-3 rounded bg-gray-200"></div>
-                    <div className="h-3 rounded bg-gray-200"></div>
-                    <div className="h-3 w-2/3 rounded bg-gray-200"></div>
+                    <div className="h-3 rounded bg-gray-200" />
+                    <div className="h-3 rounded bg-gray-200" />
+                    <div className="h-3 w-2/3 rounded bg-gray-200" />
                   </div>
                 </CardContent>
               </Card>

@@ -340,7 +340,7 @@ export default function PriceDiscountDialog({
             >
               {isApplying ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
                   应用中...
                 </>
               ) : (

@@ -62,7 +62,7 @@ export function DataTable<T extends Record<string, any>>({
         )}
         <CardContent>
           <div className="py-8 text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2"></div>
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
             <p className="text-gray-600">加载中...</p>
           </div>
         </CardContent>

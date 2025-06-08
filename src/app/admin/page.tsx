@@ -17,7 +17,6 @@ import { mockAuthService, mockOrderService } from '@/lib/services/mockDataServic
 import { productService } from '@/lib/services/productService';
 import { exportContractToPDF, generateContractFromOrder } from '@/lib/utils/contractUtils';
 import { exportOrdersToExcel, exportOrdersToPDF, generatePrintableOrdersHTML } from '@/lib/utils/exportUtils';
-import { useReactToPrint } from 'react-to-print';
 import { formatDate, formatPrice, getOrderStatusColor, getOrderStatusText } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Contract, CustomerType, Order, Product, User } from '@/types';
@@ -49,6 +48,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -56,6 +56,7 @@ export default function AdminPage() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // 新增：所有用户列表（包括管理员）
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
@@ -136,14 +137,16 @@ export default function AdminPage() {
 
     const loadData = async () => {
       try {
-        const [ordersData, customersData, productsData] = await Promise.all([
+        const [ordersData, customersData, allUsersData, productsData] = await Promise.all([
           mockOrderService.getAll(),
           mockAuthService.getAllCustomers(),
+          mockAuthService.getAllUsers(user.id), // 获取所有用户（包括管理员）
           productService.getAllForAdmin(),
         ]);
 
         setOrders(ordersData);
         setCustomers(customersData);
+        setAllUsers(allUsersData); // 设置所有用户数据
         setProducts(productsData);
 
         // 计算统计数据
@@ -553,8 +556,12 @@ ${itemsDetails}
       }
 
       // 刷新用户列表
-      const updatedCustomers = await mockAuthService.getAllCustomers();
+      const [updatedCustomers, updatedAllUsers] = await Promise.all([
+        mockAuthService.getAllCustomers(),
+        mockAuthService.getAllUsers(user.id)
+      ]);
       setCustomers(updatedCustomers);
+      setAllUsers(updatedAllUsers);
       
       setIsAddUserDialogOpen(false);
       setNewUserData({
@@ -584,8 +591,12 @@ ${itemsDetails}
       await mockAuthService.deleteUser(user.id, userId);
       
       // 刷新用户列表
-      const updatedCustomers = await mockAuthService.getAllCustomers();
+      const [updatedCustomers, updatedAllUsers] = await Promise.all([
+        mockAuthService.getAllCustomers(),
+        mockAuthService.getAllUsers(user.id)
+      ]);
       setCustomers(updatedCustomers);
+      setAllUsers(updatedAllUsers);
       
       toast.success('用户已删除');
     } catch (error) {
@@ -660,13 +671,13 @@ ${itemsDetails}
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="mb-8 h-8 w-48 rounded bg-gray-200"></div>
+            <div className="mb-8 h-8 w-48 rounded bg-gray-200" />
             <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
               {[...Array(4)].map((_, i) => (
                 <Card key={i}>
                   <CardContent className="p-6">
-                    <div className="mb-2 h-4 w-3/4 rounded bg-gray-200"></div>
-                    <div className="h-8 w-1/2 rounded bg-gray-200"></div>
+                    <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
+                    <div className="h-8 w-1/2 rounded bg-gray-200" />
                   </CardContent>
                 </Card>
               ))}
@@ -830,7 +841,7 @@ ${itemsDetails}
                         <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
                           {isExporting ? (
                             <>
-                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
                               导出中...
                             </>
                           ) : (
@@ -966,7 +977,7 @@ ${itemsDetails}
                           >
                             {generatingContract === order.id ? (
                               <>
-                                <div className="mr-1 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
+                                <div className="mr-1 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
                                 生成中...
                               </>
                             ) : (
@@ -1091,11 +1102,11 @@ ${itemsDetails}
                             disabled={togglingProductId === product.id}
                           >
                             {togglingProductId === product.id ? (
-                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2"></div>
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
                             ) : null}
                             {product.isActive ? '禁用' : '启用'}
                           </Button>
-                          <Link href={`/admin/products/edit`}>
+                          <Link href={"/admin/products/edit"}>
                             <Button variant="outline" size="sm">
                               <Edit className="mr-1 h-4 w-4" />
                               编辑
@@ -1226,7 +1237,7 @@ ${itemsDetails}
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[user, ...(customers || []).slice(0, 5)]
+                  {(allUsers || [])
                     .filter(userItem => userItem && userItem.createdAt) // 过滤掉无效的用户数据
                     .map(userItem => (
                     <div key={userItem.id} className="flex items-center justify-between rounded-lg border p-4">

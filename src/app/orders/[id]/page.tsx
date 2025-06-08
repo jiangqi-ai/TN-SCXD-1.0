@@ -69,18 +69,18 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="mb-8 h-8 w-32 rounded bg-gray-200"></div>
+            <div className="mb-8 h-8 w-32 rounded bg-gray-200" />
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <div className="h-6 w-3/4 rounded bg-gray-200"></div>
+                    <div className="h-6 w-3/4 rounded bg-gray-200" />
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="h-4 rounded bg-gray-200"></div>
-                      <div className="h-4 w-5/6 rounded bg-gray-200"></div>
-                      <div className="h-4 w-4/6 rounded bg-gray-200"></div>
+                      <div className="h-4 rounded bg-gray-200" />
+                      <div className="h-4 w-5/6 rounded bg-gray-200" />
+                      <div className="h-4 w-4/6 rounded bg-gray-200" />
                     </div>
                   </CardContent>
                 </Card>

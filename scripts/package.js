@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import archiver from 'archiver';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,14 +23,14 @@ const archive = archiver('zip', {
 });
 
 output.on('close', () => {
-  console.log(`✅ 打包完成！`);
+  console.log("✅ 打包完成！");
   console.log(`📦 文件大小: ${(archive.pointer() / 1024 / 1024).toFixed(2)} MB`);
   console.log(`📁 输出路径: ${outputPath}`);
-  console.log(`\n🚀 部署说明:`);
+  console.log("\n🚀 部署说明:");
   console.log(`1. 解压 ${packageName}`);
-  console.log(`2. 运行 npm install --production`);
-  console.log(`3. 运行 npm start`);
-  console.log(`4. 访问 http://localhost:3000`);
+  console.log("2. 运行 npm install --production");
+  console.log("3. 运行 npm start");
+  console.log("4. 访问 http://localhost:3000");
 });
 
 archive.on('error', (err) => {

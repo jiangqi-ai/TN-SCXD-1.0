@@ -133,10 +133,10 @@ export default function SecurityManagementPage() {
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="h-6 rounded bg-gray-200"></div>
+                  <div className="h-6 rounded bg-gray-200" />
                 </CardHeader>
                 <CardContent>
-                  <div className="h-8 rounded bg-gray-200"></div>
+                  <div className="h-8 rounded bg-gray-200" />
                 </CardContent>
               </Card>
             ))}
@@ -234,7 +234,7 @@ export default function SecurityManagementPage() {
                       {Object.entries(stats.sessionStats.sessionsByIP).map(([ip, count]) => (
                         <div key={ip} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                            <div className="h-2 w-2 rounded-full bg-blue-500" />
                             <span className="font-mono text-sm sm:text-base">{ip}</span>
                           </div>
                           <Badge variant="secondary" className="text-xs sm:text-sm">

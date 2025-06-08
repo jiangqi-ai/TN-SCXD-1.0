@@ -119,7 +119,7 @@ export default function ProductUploadPage() {
         jsonData.forEach((row, index) => {
           try {
             // 验证主分类
-            const categoryStr = (row as any)['主分类'] || '';
+            const categoryStr = (row as any).主分类 || '';
             if (!categoryStr) {
               throw new Error(`第 ${index + 2} 行主分类不能为空`);
             }
@@ -129,7 +129,7 @@ export default function ProductUploadPage() {
             const category = categoryStr as ProductCategory;
 
             // 验证子分类（如果有子分类的话）
-            const subCategoryStr = (row as any)['子分类'] || '';
+            const subCategoryStr = (row as any).子分类 || '';
             let subCategory: ProductSubCategory | undefined;
             if (subCategoryStr) {
               const validSubCategories = getSubCategories(category);
@@ -140,7 +140,7 @@ export default function ProductUploadPage() {
             }
 
             // 验证目标客户
-            const targetCustomersStr = (row as any)['目标客户'] || '';
+            const targetCustomersStr = (row as any).目标客户 || '';
             const targetCustomers: CustomerType[] = [];
             if (targetCustomersStr) {
               const customerList = targetCustomersStr.split(',').map((c: string) => c.trim());
@@ -153,7 +153,7 @@ export default function ProductUploadPage() {
             }
 
             // 验证折扣设置
-            const discountableStr = (row as any)['可打折'] || '';
+            const discountableStr = (row as any).可打折 || '';
             const discountable = discountableStr === '是' || discountableStr === 'true' || discountableStr === '1';
             
             let maxDiscount = 0;
@@ -171,18 +171,18 @@ export default function ProductUploadPage() {
               }
             }
 
-            const availableDimensions = parseColors((row as any)['可选尺寸'] || '');
+            const availableDimensions = parseColors((row as any).可选尺寸 || '');
             const product: Product = {
               id: generateId(),
-              productCode: validateProductCode(row['产品编号'], index),
-              image: row['图片'] || '',
+              productCode: validateProductCode(row.产品编号, index),
+              image: row.图片 || '',
               availableDimensions,
-              weight: validateNumber(row['重量'], '重量', index),
-              pieceCount: validateNumber(row['包含个数'], '包含个数', index),
-              minimumOrderQty: validateNumber(row['订单数量'], '订单数量', index),
-              availableColors: parseColors(row['颜色']),
+              weight: validateNumber(row.重量, '重量', index),
+              pieceCount: validateNumber(row.包含个数, '包含个数', index),
+              minimumOrderQty: validateNumber(row.订单数量, '订单数量', index),
+              availableColors: parseColors(row.颜色),
               unitPrice: validateNumber(row['销售价格（不含运，不含税）'], '销售价格', index),
-              remarks: row['备注'] || '',
+              remarks: row.备注 || '',
               features: [],
               applications: '',
               isActive: true,
@@ -296,12 +296,12 @@ export default function ProductUploadPage() {
               <div className={`rounded-full p-2 ${currentStep === 'select' ? 'bg-primary text-white' : 'bg-gray-200'}`}>1</div>
               <span className="ml-2">选择文件</span>
             </div>
-            <div className="h-px flex-1 bg-gray-300"></div>
+            <div className="h-px flex-1 bg-gray-300" />
             <div className={`flex items-center ${currentStep === 'preview' ? 'text-primary' : 'text-gray-400'}`}>
               <div className={`rounded-full p-2 ${currentStep === 'preview' ? 'bg-primary text-white' : 'bg-gray-200'}`}>2</div>
               <span className="ml-2">预览数据</span>
             </div>
-            <div className="h-px flex-1 bg-gray-300"></div>
+            <div className="h-px flex-1 bg-gray-300" />
             <div className={`flex items-center ${currentStep === 'uploading' || currentStep === 'complete' ? 'text-primary' : 'text-gray-400'}`}>
               <div className={`rounded-full p-2 ${currentStep === 'uploading' || currentStep === 'complete' ? 'bg-primary text-white' : 'bg-gray-200'}`}>3</div>
               <span className="ml-2">上传完成</span>
