@@ -48,6 +48,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { toast } from 'sonner';
+import DatabaseConfig from '@/components/DatabaseConfig'
 
 export default function AdminPage() {
   const router = useRouter();
@@ -71,7 +72,8 @@ export default function AdminPage() {
     phone: '',
     oldPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    address: ''
   });
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -90,7 +92,7 @@ export default function AdminPage() {
     company: '',
     phone: '',
     address: '',
-    customerType: '' as '' | CustomerType
+    role: 'customer' as 'admin' | 'customer'
   });
   const [userData, setUserData] = useState({
     name: '',
@@ -386,19 +388,19 @@ ${itemsDetails}
   };
 
   const handleEditAdmin = () => {
-    if (user) {
-      setEditingAdmin(user);
-      setAdminData({
-        name: user.profile.name,
-        email: user.email,
-        company: user.profile.company || '',
-        phone: user.profile.phone || '',
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-      setIsAdminDialogOpen(true);
-    }
+    if (!user) return;
+    setEditingAdmin(user);
+    setAdminData({
+      name: user.name,
+      email: user.email,
+      company: user.company || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setIsAdminDialogOpen(true);
   };
 
   const handleSaveAdmin = async () => {
@@ -413,11 +415,10 @@ ${itemsDetails}
     try {
       const updateData: Partial<User> = {
         email: adminData.email,
-        profile: {
-          name: adminData.name,
-          company: adminData.company,
-          phone: adminData.phone
-        }
+        name: adminData.name,
+        company: adminData.company,
+        phone: adminData.phone,
+        address: adminData.address
       };
 
       if (adminData.newPassword) {
@@ -425,6 +426,16 @@ ${itemsDetails}
       }
 
       await mockAuthService.updateProfile(editingAdmin.id, updateData);
+      
+      // 刷新用户信息
+      const updatedUsers = await mockAuthService.getAllUsers(editingAdmin.id);
+      if (updatedUsers.length > 0) {
+        const currentUser = updatedUsers.find(u => u.id === editingAdmin.id);
+        if (currentUser) {
+          useAuthStore.setState({ user: currentUser });
+        }
+      }
+      
       setIsAdminDialogOpen(false);
       setEditingAdmin(null);
       toast.success('账户信息已更新');
@@ -436,12 +447,12 @@ ${itemsDetails}
   const handleEditCustomer = (customer: User) => {
     setEditingCustomer(customer);
     setCustomerData({
-      name: customer.profile.name,
+      name: customer.name,
       email: customer.email,
-      company: customer.profile.company || '',
-      phone: customer.profile.phone || '',
-      address: customer.profile.address || '',
-      customerType: customer.customerType || ''
+      company: customer.company || '',
+      phone: customer.phone || '',
+      address: customer.address || '',
+      role: customer.role || 'customer'
     });
     setIsCustomerDialogOpen(true);
   };
@@ -452,13 +463,11 @@ ${itemsDetails}
     try {
       const updateData: Partial<User> = {
         email: customerData.email,
-        profile: {
-          name: customerData.name,
-          company: customerData.company,
-          phone: customerData.phone,
-          address: customerData.address
-        },
-        customerType: customerData.customerType || undefined
+        name: customerData.name,
+        company: customerData.company,
+        phone: customerData.phone,
+        address: customerData.address,
+        role: customerData.role
       };
 
       await mockAuthService.updateProfile(editingCustomer.id, updateData);
@@ -483,11 +492,11 @@ ${itemsDetails}
     
     setEditingUser(userItem);
     setUserData({
-      name: userItem.profile.name,
+      name: userItem.name,
       email: userItem.email,
-      company: userItem.profile.company || '',
-      phone: userItem.profile.phone || '',
-      address: userItem.profile.address || ''
+      company: userItem.company || '',
+      phone: userItem.phone || '',
+      address: userItem.address || ''
     });
     setIsUserDialogOpen(true);
   };
@@ -498,12 +507,10 @@ ${itemsDetails}
     try {
       const updateData: Partial<User> = {
         email: userData.email,
-        profile: {
-          name: userData.name,
-          company: userData.company,
-          phone: userData.phone,
-          address: userData.address
-        }
+        name: userData.name,
+        company: userData.company,
+        phone: userData.phone,
+        address: userData.address
       };
 
       await mockAuthService.updateProfile(editingUser.id, updateData);
@@ -705,1133 +712,32 @@ ${itemsDetails}
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* 返回按钮和退出登录 */}
-        <div className="mb-6 flex items-center justify-between">
-          <Link href="/">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              返回首页
-            </Button>
-          </Link>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600 text-sm">欢迎，{user?.profile.name}</span>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              退出登录
-            </Button>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h1 className="mb-4 font-bold text-3xl text-gray-900">管理后台</h1>
-          <p className="text-gray-600">
-            攀岩墙定制系统管理面板
-          </p>
-        </div>
-
-        {/* 快速操作卡片 */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Link href="/admin/products/edit">
-            <Card className="cursor-pointer transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <Package className="h-8 w-8 text-blue-600" />
-                  <div className="ml-4">
-                    <p className="font-medium text-gray-900 text-lg">产品管理</p>
-                    <p className="text-gray-600 text-sm">管理产品信息和库存</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/security">
-            <Card className="cursor-pointer transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <Shield className="h-8 w-8 text-red-600" />
-                  <div className="ml-4">
-                    <p className="font-medium text-gray-900 text-lg">安全管理</p>
-                    <p className="text-gray-600 text-sm">监控登录安全和会话</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Card className="cursor-pointer transition-shadow hover:shadow-lg" onClick={() => setIsAddUserDialogOpen(true)}>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <UserPlus className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="font-medium text-gray-900 text-lg">添加用户</p>
-                  <p className="text-gray-600 text-sm">创建新的系统用户</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 统计卡片 */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <ShoppingCart className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="font-medium text-gray-600 text-sm">总订单数</p>
-                  <p className="font-bold text-2xl text-gray-900">{stats.totalOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <FileText className="h-8 w-8 text-yellow-600" />
-                <div className="ml-4">
-                  <p className="font-medium text-gray-600 text-sm">待处理订单</p>
-                  <p className="font-bold text-2xl text-gray-900">{stats.pendingOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="font-medium text-gray-600 text-sm">客户总数</p>
-                  <p className="font-bold text-2xl text-gray-900">{stats.totalCustomers}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="font-medium text-gray-600 text-sm">总收入</p>
-                  <p className="font-bold text-2xl text-gray-900">{formatPrice(stats.totalRevenue)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 管理选项卡 */}
-        <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="orders" className="text-blue-600 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">订单管理</TabsTrigger>
-            <TabsTrigger value="products" className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">产品管理</TabsTrigger>
-            <TabsTrigger value="customers" className="text-purple-600 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700">客户管理</TabsTrigger>
-            <TabsTrigger value="users" className="text-orange-600 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">用户管理</TabsTrigger>
-            <TabsTrigger value="security" className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">安全管理</TabsTrigger>
-            <TabsTrigger value="settings" className="text-gray-600 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-700">系统设置</TabsTrigger>
-          </TabsList>
-
-          {/* 订单管理 */}
-          <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>订单管理</CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrintOrders}
-                      disabled={orders.length === 0}
-                    >
-                      <Printer className="mr-2 h-4 w-4" />
-                      打印订单
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" disabled={isExporting || orders.length === 0}>
-                          {isExporting ? (
-                            <>
-                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
-                              导出中...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="mr-2 h-4 w-4" />
-                              导出订单
-                              <MoreHorizontal className="ml-1 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleExportOrdersExcel}>
-                          <FileSpreadsheet className="mr-2 h-4 w-4" />
-                          导出为Excel
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportOrdersPDF}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          导出为PDF
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {(orders || []).slice(0, 10).map(order => (
-                    <div key={order.id} className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <p className="font-medium">{order.orderNumber}</p>
-                            <p className="text-gray-600 text-sm">
-                              {order.customerInfo.name} | {formatDate(order.orderDate, 'short')}
-                            </p>
-                            {order.confirmedAt && (
-                              <p className="text-green-600 text-xs">
-                                确认: {formatDate(order.confirmedAt, 'short')}
-                              </p>
-                            )}
-                            {order.productionStartedAt && (
-                              <p className="text-blue-600 text-xs">
-                                生产: {formatDate(order.productionStartedAt, 'short')}
-                              </p>
-                            )}
-                            {order.completedAt && (
-                              <p className="text-green-600 text-xs">
-                                完成: {formatDate(order.completedAt, 'short')}
-                              </p>
-                            )}
-                          </div>
-                          <Badge className={getOrderStatusColor(order.status)}>
-                            {getOrderStatusText(order.status)}
-                          </Badge>
-                        </div>
-                        <p className="mt-2 text-gray-600 text-sm">
-                          {(order.items || []).length} 个商品 | {formatPrice(order.totalAmount)} | 对账单确认
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {order.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateOrderStatus(order.id, 'confirmed')}
-                            >
-                              <CheckCircle className="mr-1 h-4 w-4" />
-                              确认订单
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditOrder(order)}
-                            >
-                              <Edit className="mr-1 h-4 w-4" />
-                              编辑订单
-                            </Button>
-                          </>
-                        )}
-                        {order.status === 'confirmed' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateOrderStatus(order.id, 'production')}
-                            >
-                              <Package className="mr-1 h-4 w-4" />
-                              开始生产
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditOrder(order)}
-                            >
-                              <Calendar className="mr-1 h-4 w-4" />
-                              回复交期
-                            </Button>
-                          </>
-                        )}
-                        {order.status === 'production' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
-                            >
-                              <Truck className="mr-1 h-4 w-4" />
-                              完成订单
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleNotifyCustomer(order)}
-                            >
-                              <Bell className="mr-1 h-4 w-4" />
-                              通知出货
-                            </Button>
-                          </>
-                        )}
-                        <Link href={`/orders/${order.id}`}>
-                          <Button variant="outline" size="sm">
-                            <FileText className="mr-1 h-4 w-4" />
-                            查看详情
-                          </Button>
-                        </Link>
-                        
-                        {/* 生成合同按钮 */}
-                        {(order.status === 'confirmed' || order.status === 'production' || order.status === 'completed') && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleGenerateContract(order)}
-                            disabled={generatingContract === order.id}
-                          >
-                            {generatingContract === order.id ? (
-                              <>
-                                <div className="mr-1 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
-                                生成中...
-                              </>
-                            ) : (
-                              <>
-                                <FilePlus className="mr-1 h-4 w-4" />
-                                生成合同
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        {(order.status === 'pending' || order.status === 'cancelled') && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="mr-1 h-4 w-4" />
-                                删除
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>确认删除订单</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  您确定要删除订单 {order.orderNumber} 吗？此操作不可撤销。
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>取消</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteOrder(order.id)}
-                                  disabled={deletingOrderId === order.id}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  {deletingOrderId === order.id ? '删除中...' : '确认删除'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 产品管理 */}
-          <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>产品管理</CardTitle>
-                  <div className="space-x-2">
-                    <Link href="/admin/products/upload">
-                      <Button>
-                        <Upload className="mr-2 h-4 w-4" />
-                        批量上传
-                      </Button>
-                    </Link>
-                    <Link href="/admin/products/edit">
-                      <Button variant="outline">
-                        <Edit className="mr-2 h-4 w-4" />
-                        详细编辑
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {(!products || products.length === 0) ? (
-                  <div className="py-8 text-center">
-                    <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-                    <p className="mb-4 text-gray-600">暂无产品数据</p>
-                    <Link href="/admin/products/upload">
-                      <Button>
-                        <Upload className="mr-2 h-4 w-4" />
-                        上传产品
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {(products || []).map(product => (
-                      <div key={product.id} className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100">
-                            {product.image ? (
-                              <img 
-                                src={product.image} 
-                                alt={product.productCode}
-                                className="h-full w-full rounded-lg object-cover"
-                              />
-                            ) : (
-                              <Package className="h-8 w-8 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">{product.productCode}</p>
-                            <p className="text-gray-600 text-sm">
-                              {product.category} - {product.subCategory}
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                              价格: {formatPrice(product.unitPrice)} | 起订: {product.minimumOrderQty}件
-                            </p>
-                            <div className="mt-1 flex gap-1">
-                              {(product.targetCustomers || []).map(type => (
-                                <Badge key={type} variant="outline" className="text-xs">
-                                  {type}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={product.isActive ? 'default' : 'secondary'}>
-                            {product.isActive ? '启用' : '禁用'}
-                          </Badge>
-                          <Button
-                            variant={product.isActive ? 'outline' : 'default'}
-                            size="sm"
-                            onClick={() => handleToggleProductStatus(product.id, product.isActive)}
-                            disabled={togglingProductId === product.id}
-                          >
-                            {togglingProductId === product.id ? (
-                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-current border-b-2" />
-                            ) : null}
-                            {product.isActive ? '禁用' : '启用'}
-                          </Button>
-                          <Link href={"/admin/products/edit"}>
-                            <Button variant="outline" size="sm">
-                              <Edit className="mr-1 h-4 w-4" />
-                              编辑
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 客户管理 */}
-          <TabsContent value="customers">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>客户管理</CardTitle>
-                  <Button onClick={() => {
-                    setNewUserData({
-                      username: '',
-                      email: '',
-                      password: '',
-                      name: '',
-                      company: '',
-                      phone: '',
-                      role: 'customer'
-                    });
-                    setIsAddUserDialogOpen(true);
-                  }}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    添加客户
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {(customers || []).map(customer => (
-                    <div key={customer.id} className="flex items-center justify-between rounded-lg border p-4">
-                      <div>
-                        <p className="font-medium">{customer.profile.name}</p>
-                        <p className="text-gray-600 text-sm">
-                          {customer.email} | {customer.profile.company || '个人客户'}
-                        </p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <p className="text-gray-600 text-sm">
-                            注册时间: {customer.createdAt ? formatDate(customer.createdAt, 'short') : '未知'}
-                          </p>
-                          {customer.customerType && (
-                            <Badge variant="outline" className="text-xs">
-                              {customer.customerType}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={customer.isActive ? 'default' : 'secondary'}>
-                          {customer.isActive ? '活跃' : '禁用'}
-                        </Badge>
-                        <Button variant="outline" size="sm" onClick={() => handleEditCustomer(customer)}>
-                          <Edit className="mr-1 h-4 w-4" />
-                          编辑
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                              <Trash2 className="mr-1 h-4 w-4" />
-                              删除
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>确认删除客户</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                您确定要删除客户 {customer.profile.name} 吗？此操作不可撤销。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteCustomer(customer.id)}
-                                disabled={deletingUserId === customer.id}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                {deletingUserId === customer.id ? '删除中...' : '确认删除'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 用户管理 */}
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>用户管理</CardTitle>
-                  <div className="space-x-2">
-                    <Button variant="outline" onClick={() => handleEditAdmin()}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      编辑我的账户
-                    </Button>
-                    <Button onClick={() => {
-                      setNewUserData({
-                        username: '',
-                        email: '',
-                        password: '',
-                        name: '',
-                        company: '',
-                        phone: '',
-                        role: 'admin'
-                      });
-                      setIsAddUserDialogOpen(true);
-                    }}>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      添加用户
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {(allUsers || [])
-                    .filter(userItem => userItem && userItem.createdAt) // 过滤掉无效的用户数据
-                    .map(userItem => (
-                    <div key={userItem.id} className="flex items-center justify-between rounded-lg border p-4">
-                      <div>
-                        <p className="font-medium">{userItem.profile.name}</p>
-                        <p className="text-gray-600 text-sm">
-                          {userItem.email} | {userItem.role === 'admin' ? '管理员' : '普通用户'}
-                        </p>
-                        <p className="text-gray-600 text-sm">
-                          创建时间: {userItem.createdAt ? formatDate(userItem.createdAt, 'short') : '未知'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={userItem.role === 'admin' ? 'default' : 'secondary'}>
-                          {userItem.role === 'admin' ? '管理员' : '普通用户'}
-                        </Badge>
-                        <Button variant="outline" size="sm" onClick={() => handleEditUser(userItem)}>
-                          <Edit className="mr-1 h-4 w-4" />
-                          编辑
-                        </Button>
-                        {userItem.id !== user?.id && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="mr-1 h-4 w-4" />
-                                删除
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>确认删除用户</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  您确定要删除用户 {userItem.profile.name} 吗？此操作不可撤销。
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>取消</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteUser(userItem.id)}
-                                  disabled={deletingUserId === userItem.id}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  {deletingUserId === userItem.id ? '删除中...' : '确认删除'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 安全管理 */}
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  安全管理
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="py-8 text-center">
-                    <Shield className="mx-auto mb-4 h-16 w-16 text-red-600" />
-                    <h3 className="mb-2 font-medium text-gray-900 text-lg">系统安全监控</h3>
-                    <p className="mb-6 text-gray-600">
-                      管理登录安全、会话控制和IP访问限制
-                    </p>
-                    <Link href="/admin/security">
-                      <Button size="lg" className="bg-red-600 hover:bg-red-700">
-                        <Shield className="mr-2 h-4 w-4" />
-                        进入安全管理
-                      </Button>
-                    </Link>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-4 border-t pt-6 md:grid-cols-3">
-                    <div className="rounded-lg bg-red-50 p-4 text-center">
-                      <div className="font-bold text-2xl text-red-600">IP限制</div>
-                      <div className="mt-1 text-gray-600 text-sm">单IP登录保护</div>
-                    </div>
-                    <div className="rounded-lg bg-yellow-50 p-4 text-center">
-                      <div className="font-bold text-2xl text-yellow-600">防暴力破解</div>
-                      <div className="mt-1 text-gray-600 text-sm">登录尝试限制</div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 p-4 text-center">
-                      <div className="font-bold text-2xl text-green-600">会话管理</div>
-                      <div className="mt-1 text-gray-600 text-sm">实时会话监控</div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 系统设置 */}
-          <TabsContent value="settings">
-            <div className="space-y-6">
-              {/* 数据同步状态 */}
-              <DataSyncStatus />
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>系统设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="mb-4 font-medium text-lg">基本设置</h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="mb-2 block font-medium text-sm">系统名称</label>
-                          <p className="text-gray-600 text-sm">攀岩墙定制系统</p>
-                        </div>
-                        <div>
-                          <label className="mb-2 block font-medium text-sm">系统版本</label>
-                          <p className="text-gray-600 text-sm">v1.0.0</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="mb-4 font-medium text-lg">业务设置</h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="mb-2 block font-medium text-sm">运费政策</label>
-                          <p className="text-gray-600 text-sm">运费到付</p>
-                        </div>
-                        <div>
-                          <label className="mb-2 block font-medium text-sm">客服信息</label>
-                          <p className="text-gray-600 text-sm">13632603365</p>
-                          <p className="text-gray-600 text-sm">good-181@163.com</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">管理后台</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="w-4 h-4 mr-2" />
+          退出登录
+        </Button>
       </div>
 
-      {/* 订单编辑对话框 */}
-      <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑订单</DialogTitle>
-          </DialogHeader>
-          {editingOrder && (
-            <div className="space-y-4">
-              <div>
-                <Label>订单号</Label>
-                <p className="text-gray-600 text-sm">{editingOrder.orderNumber}</p>
-              </div>
-              
-              <div>
-                <Label>客户信息</Label>
-                <p className="text-gray-600 text-sm">
-                  {editingOrder.customerInfo.name} | {editingOrder.customerInfo.contact}
-                </p>
-              </div>
+      <div className="mb-8">
+        <DatabaseConfig />
+      </div>
 
-              <div>
-                <Label htmlFor="deliveryDate">预计交货日期</Label>
-                <Input
-                  id="deliveryDate"
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                />
-              </div>
+      <div className="mb-8">
+        <DataSyncStatus />
+      </div>
 
-              <div>
-                <Label htmlFor="productionNotes">生产备注</Label>
-                <Textarea
-                  id="productionNotes"
-                  placeholder="请输入生产备注..."
-                  value={productionNotes}
-                  onChange={(e) => setProductionNotes(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsOrderDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button onClick={handleSaveOrderChanges}>
-                  保存
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 管理员编辑对话框 */}
-      <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑管理员账户</DialogTitle>
-          </DialogHeader>
-          {editingAdmin && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="adminName">姓名</Label>
-                  <Input
-                    id="adminName"
-                    value={adminData.name}
-                    onChange={(e) => setAdminData({...adminData, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="adminEmail">邮箱</Label>
-                  <Input
-                    id="adminEmail"
-                    type="email"
-                    value={adminData.email}
-                    onChange={(e) => setAdminData({...adminData, email: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="adminCompany">公司</Label>
-                  <Input
-                    id="adminCompany"
-                    value={adminData.company}
-                    onChange={(e) => setAdminData({...adminData, company: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="adminPhone">电话</Label>
-                  <Input
-                    id="adminPhone"
-                    value={adminData.phone}
-                    onChange={(e) => setAdminData({...adminData, phone: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h4 className="mb-2 font-medium">修改密码（可选）</h4>
-                <div className="space-y-2">
-                  <div>
-                    <Label htmlFor="oldPassword">当前密码</Label>
-                    <Input
-                      id="oldPassword"
-                      type="password"
-                      value={adminData.oldPassword}
-                      onChange={(e) => setAdminData({...adminData, oldPassword: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="newPassword">新密码</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={adminData.newPassword}
-                      onChange={(e) => setAdminData({...adminData, newPassword: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirmPassword">确认新密码</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={adminData.confirmPassword}
-                      onChange={(e) => setAdminData({...adminData, confirmPassword: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAdminDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button onClick={handleSaveAdmin}>
-                  保存
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 客户编辑对话框 */}
-      <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑客户信息</DialogTitle>
-          </DialogHeader>
-          {editingCustomer && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="customerName">姓名</Label>
-                  <Input
-                    id="customerName"
-                    value={customerData.name}
-                    onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerEmail">邮箱</Label>
-                  <Input
-                    id="customerEmail"
-                    type="email"
-                    value={customerData.email}
-                    onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="customerCompany">公司</Label>
-                  <Input
-                    id="customerCompany"
-                    value={customerData.company}
-                    onChange={(e) => setCustomerData({...customerData, company: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerPhone">电话</Label>
-                  <Input
-                    id="customerPhone"
-                    value={customerData.phone}
-                    onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="customerAddress">地址</Label>
-                  <Input
-                    id="customerAddress"
-                    value={customerData.address}
-                    onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerType">客户类型</Label>
-                  <Select value={customerData.customerType} onValueChange={(value) => setCustomerData({...customerData, customerType: value as CustomerType})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择客户类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                                                  <SelectItem value="未分类">未分类</SelectItem>
-                            <SelectItem value="OEM客户">OEM客户</SelectItem>
-                            <SelectItem value="品牌客户">品牌客户</SelectItem>
-                            <SelectItem value="工程客户">工程客户</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCustomerDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button onClick={handleSaveCustomer}>
-                  保存
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 用户编辑对话框 */}
-      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑用户信息</DialogTitle>
-          </DialogHeader>
-          {editingUser && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="userName">姓名</Label>
-                  <Input
-                    id="userName"
-                    value={userData.name}
-                    onChange={(e) => setUserData({...userData, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="userEmail">邮箱</Label>
-                  <Input
-                    id="userEmail"
-                    type="email"
-                    value={userData.email}
-                    onChange={(e) => setUserData({...userData, email: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="userCompany">公司</Label>
-                  <Input
-                    id="userCompany"
-                    value={userData.company}
-                    onChange={(e) => setUserData({...userData, company: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="userPhone">电话</Label>
-                  <Input
-                    id="userPhone"
-                    value={userData.phone}
-                    onChange={(e) => setUserData({...userData, phone: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="userAddress">地址</Label>
-                  <Input
-                    id="userAddress"
-                    value={userData.address}
-                    onChange={(e) => setUserData({...userData, address: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button onClick={handleSaveUser}>
-                  保存
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 添加用户对话框 */}
-      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加新用户</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="newUserName">用户名</Label>
-              <Input
-                id="newUserName"
-                value={newUserData.username}
-                onChange={(e) => setNewUserData({...newUserData, username: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserEmail">邮箱</Label>
-              <Input
-                id="newUserEmail"
-                type="email"
-                value={newUserData.email}
-                onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserPassword">密码</Label>
-              <Input
-                id="newUserPassword"
-                type="password"
-                value={newUserData.password}
-                onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserName">姓名</Label>
-              <Input
-                id="newUserName"
-                value={newUserData.name}
-                onChange={(e) => setNewUserData({...newUserData, name: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserCompany">公司</Label>
-              <Input
-                id="newUserCompany"
-                value={newUserData.company}
-                onChange={(e) => setNewUserData({...newUserData, company: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserPhone">电话</Label>
-              <Input
-                id="newUserPhone"
-                value={newUserData.phone}
-                onChange={(e) => setNewUserData({...newUserData, phone: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="newUserRole">角色</Label>
-              <Select value={newUserData.role} onValueChange={(value) => setNewUserData({...newUserData, role: value as 'admin' | 'customer'})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择角色" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="customer">普通用户</SelectItem>
-                  <SelectItem value="admin">管理员</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
-                取消
-              </Button>
-              <Button onClick={handleAddUser}>
-                保存
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 生成合同对话框 */}
-      <Dialog open={isContractDialogOpen} onOpenChange={setIsContractDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>生成合同</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="contractTerms">合同条款</Label>
-              <Textarea
-                id="contractTerms"
-                value={contractData.terms}
-                onChange={(e) => setContractData({...contractData, terms: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="contractDeliveryDate">预计交货日期</Label>
-              <Input
-                id="contractDeliveryDate"
-                type="date"
-                value={contractData.deliveryDate}
-                onChange={(e) => setContractData({...contractData, deliveryDate: e.target.value})}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsContractDialogOpen(false)}>
-                取消
-              </Button>
-              <Button onClick={handleSaveContract}>
-                生成合同
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 隐藏的打印内容 */}
-      <div className="hidden">
-        <div ref={printRef}>
-          <div dangerouslySetInnerHTML={{ 
-            __html: generatePrintableOrdersHTML(orders, {
-              format: 'pdf',
-              includeItems: true,
-              includeCustomerInfo: true
-            })
-          }} />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-medium mb-2">系统状态</h3>
+            <p className="text-sm text-gray-500">
+              {isAuthenticated ? '已连接' : '未连接'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

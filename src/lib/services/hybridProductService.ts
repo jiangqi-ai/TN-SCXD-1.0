@@ -1,7 +1,7 @@
 import { databaseProductService } from './databaseService'
 import { safeProductService } from './databaseServiceSafe'
 import { isDatabaseAvailable, getStorageInfo } from './vercelCompat'
-import type { CustomerType, Product } from '@/types'
+import type { CustomerType, Product, ProductCategory, ProductSubCategory } from '@/types'
 
 // 动态检测是否使用数据库
 const USE_DATABASE = isDatabaseAvailable()
@@ -17,7 +17,30 @@ export const productService = {
   async getAll(customerType?: CustomerType): Promise<Product[]> {
     try {
       if (USE_DATABASE) {
-        return await databaseProductService.getAll(customerType)
+        const result = await databaseProductService.getProducts({})
+        // 转换数据库产品格式为应用产品格式
+        return result.products.map(dbProduct => ({
+          id: dbProduct.id,
+          productCode: dbProduct.name,
+          image: dbProduct.images,
+          availableDimensions: dbProduct.size ? [dbProduct.size] : [],
+          weight: dbProduct.weight || 0,
+          pieceCount: 1,
+          minimumOrderQty: dbProduct.minOrderQty || 1,
+          availableColors: dbProduct.colors ? dbProduct.colors.split(',') : [],
+          unitPrice: dbProduct.price,
+          remarks: dbProduct.description,
+          features: dbProduct.features ? dbProduct.features.split(',') : [],
+          applications: dbProduct.specifications,
+          isActive: dbProduct.isActive || false,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+          category: dbProduct.category as ProductCategory,
+          subCategory: dbProduct.category as ProductSubCategory,
+          targetCustomers: ['未分类'],
+          discountable: true,
+          maxDiscount: 100
+        }))
       } else {
         return await safeProductService.getAll(customerType)
       }
@@ -31,7 +54,30 @@ export const productService = {
   async getAllForAdmin(): Promise<Product[]> {
     try {
       if (USE_DATABASE) {
-        return await databaseProductService.getAllForAdmin()
+        const result = await databaseProductService.getProducts({})
+        // 转换数据库产品格式为应用产品格式
+        return result.products.map(dbProduct => ({
+          id: dbProduct.id,
+          productCode: dbProduct.name,
+          image: dbProduct.images,
+          availableDimensions: dbProduct.size ? [dbProduct.size] : [],
+          weight: dbProduct.weight || 0,
+          pieceCount: 1,
+          minimumOrderQty: dbProduct.minOrderQty || 1,
+          availableColors: dbProduct.colors ? dbProduct.colors.split(',') : [],
+          unitPrice: dbProduct.price,
+          remarks: dbProduct.description,
+          features: dbProduct.features ? dbProduct.features.split(',') : [],
+          applications: dbProduct.specifications,
+          isActive: dbProduct.isActive || false,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+          category: dbProduct.category as ProductCategory,
+          subCategory: dbProduct.category as ProductSubCategory,
+          targetCustomers: ['未分类'],
+          discountable: true,
+          maxDiscount: 100
+        }))
       } else {
         return await safeProductService.getAllForAdmin()
       }
@@ -44,7 +90,32 @@ export const productService = {
   async getById(id: string): Promise<Product | null> {
     try {
       if (USE_DATABASE) {
-        return await databaseProductService.getById(id)
+        const dbProduct = await databaseProductService.getProductById(id)
+        if (!dbProduct) return null
+        
+        // 转换数据库产品格式为应用产品格式
+        return {
+          id: dbProduct.id,
+          productCode: dbProduct.name,
+          image: dbProduct.images,
+          availableDimensions: dbProduct.size ? [dbProduct.size] : [],
+          weight: dbProduct.weight || 0,
+          pieceCount: 1,
+          minimumOrderQty: dbProduct.minOrderQty || 1,
+          availableColors: dbProduct.colors ? dbProduct.colors.split(',') : [],
+          unitPrice: dbProduct.price,
+          remarks: dbProduct.description,
+          features: dbProduct.features ? dbProduct.features.split(',') : [],
+          applications: dbProduct.specifications,
+          isActive: dbProduct.isActive || false,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+          category: dbProduct.category as ProductCategory,
+          subCategory: dbProduct.category as ProductSubCategory,
+          targetCustomers: ['未分类'],
+          discountable: true,
+          maxDiscount: 100
+        }
       } else {
         return await safeProductService.getById(id)
       }
@@ -57,7 +128,53 @@ export const productService = {
   async create(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
       if (USE_DATABASE) {
-        const result = await databaseProductService.create(productData)
+        // 转换应用产品格式为数据库产品格式
+        const dbProductData = {
+          name: productData.productCode,
+          category: productData.category,
+          brand: '',
+          model: '',
+          description: productData.remarks || '',
+          specifications: productData.applications || '',
+          images: productData.image,
+          price: productData.unitPrice,
+          stock: 0,
+          weight: productData.weight,
+          size: productData.availableDimensions[0] || '',
+          colors: productData.availableColors.join(','),
+          features: productData.features?.join(',') || '',
+          certifications: '',
+          isActive: productData.isActive,
+          isFeatured: false,
+          minOrderQty: productData.minimumOrderQty
+        }
+        
+        const dbProduct = await databaseProductService.createProduct(dbProductData)
+        
+        // 转换回应用产品格式
+        const result: Product = {
+          id: dbProduct.id,
+          productCode: dbProduct.name,
+          image: dbProduct.images,
+          availableDimensions: dbProduct.size ? [dbProduct.size] : [],
+          weight: dbProduct.weight || 0,
+          pieceCount: 1,
+          minimumOrderQty: dbProduct.minOrderQty || 1,
+          availableColors: dbProduct.colors ? dbProduct.colors.split(',') : [],
+          unitPrice: dbProduct.price,
+          remarks: dbProduct.description,
+          features: dbProduct.features ? dbProduct.features.split(',') : [],
+          applications: dbProduct.specifications,
+          isActive: dbProduct.isActive || false,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+          category: dbProduct.category as ProductCategory,
+          subCategory: dbProduct.category as ProductSubCategory,
+          targetCustomers: ['未分类'],
+          discountable: true,
+          maxDiscount: 100
+        }
+        
         // 同时更新本地存储以保持同步
         await safeProductService.create(productData)
         return result
@@ -73,7 +190,47 @@ export const productService = {
   async update(id: string, updates: Partial<Product>): Promise<Product> {
     try {
       if (USE_DATABASE) {
-        const result = await databaseProductService.update(id, updates)
+        // 转换应用产品格式为数据库产品格式
+        const dbUpdates: any = {}
+        if (updates.productCode !== undefined) dbUpdates.name = updates.productCode
+        if (updates.category !== undefined) dbUpdates.category = updates.category
+        if (updates.remarks !== undefined) dbUpdates.description = updates.remarks
+        if (updates.applications !== undefined) dbUpdates.specifications = updates.applications
+        if (updates.image !== undefined) dbUpdates.images = updates.image
+        if (updates.unitPrice !== undefined) dbUpdates.price = updates.unitPrice
+        if (updates.weight !== undefined) dbUpdates.weight = updates.weight
+        if (updates.availableDimensions !== undefined) dbUpdates.size = updates.availableDimensions[0] || ''
+        if (updates.availableColors !== undefined) dbUpdates.colors = updates.availableColors.join(',')
+        if (updates.features !== undefined) dbUpdates.features = updates.features.join(',')
+        if (updates.isActive !== undefined) dbUpdates.isActive = updates.isActive
+        if (updates.minimumOrderQty !== undefined) dbUpdates.minOrderQty = updates.minimumOrderQty
+        
+        const dbProduct = await databaseProductService.updateProduct(id, dbUpdates)
+        
+        // 转换回应用产品格式
+        const result: Product = {
+          id: dbProduct.id,
+          productCode: dbProduct.name,
+          image: dbProduct.images,
+          availableDimensions: dbProduct.size ? [dbProduct.size] : [],
+          weight: dbProduct.weight || 0,
+          pieceCount: 1,
+          minimumOrderQty: dbProduct.minOrderQty || 1,
+          availableColors: dbProduct.colors ? dbProduct.colors.split(',') : [],
+          unitPrice: dbProduct.price,
+          remarks: dbProduct.description,
+          features: dbProduct.features ? dbProduct.features.split(',') : [],
+          applications: dbProduct.specifications,
+          isActive: dbProduct.isActive || false,
+          createdAt: dbProduct.createdAt,
+          updatedAt: dbProduct.updatedAt,
+          category: dbProduct.category as ProductCategory,
+          subCategory: dbProduct.category as ProductSubCategory,
+          targetCustomers: ['未分类'],
+          discountable: true,
+          maxDiscount: 100
+        }
+        
         // 同时更新本地存储
         try {
           await safeProductService.update(id, updates)
@@ -93,7 +250,7 @@ export const productService = {
   async delete(id: string): Promise<void> {
     try {
       if (USE_DATABASE) {
-        await databaseProductService.delete(id)
+        await databaseProductService.deleteProduct(id)
         // 同时删除本地存储
         try {
           await safeProductService.delete(id)
@@ -112,7 +269,29 @@ export const productService = {
   async uploadFromExcel(newProducts: Product[]): Promise<void> {
     try {
       if (USE_DATABASE) {
-        await databaseProductService.uploadFromExcel(newProducts)
+        // 转换应用产品格式为数据库产品格式
+        const dbProducts = newProducts.map(product => ({
+          name: product.productCode,
+          category: product.category,
+          brand: '',
+          model: '',
+          description: product.remarks || '',
+          specifications: product.applications || '',
+          images: product.image,
+          price: product.unitPrice,
+          stock: 0,
+          weight: product.weight,
+          size: product.availableDimensions[0] || '',
+          colors: product.availableColors.join(','),
+          features: product.features?.join(',') || '',
+          certifications: '',
+          isActive: product.isActive,
+          isFeatured: false,
+          minOrderQty: product.minimumOrderQty
+        }))
+        
+        await databaseProductService.uploadFromExcel(dbProducts)
+        
         // 同时更新本地存储
         try {
           await safeProductService.uploadFromExcel(newProducts)

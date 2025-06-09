@@ -35,12 +35,10 @@ const initialUsers: User[] = [
     email: 'admin@example.com',
     password: DEFAULT_ADMIN_PASSWORD,
     role: 'admin',
-    profile: {
-      name: '管理员',
-      company: '纸箱生产厂',
-      phone: '13800138000',
-      address: '工厂地址'
-    },
+    name: '管理员',
+    company: '纸箱生产厂',
+    phone: '13800138000',
+    address: '工厂地址',
     isActive: true,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01')
@@ -51,12 +49,10 @@ const initialUsers: User[] = [
     email: 'customer1@example.com',
     password: DEFAULT_CUSTOMER_PASSWORD,
     role: 'customer',
-    profile: {
-      name: '张三',
-      company: '某某贸易公司',
-      phone: '13900139000',
-      address: '上海市浦东新区'
-    },
+    name: '张三',
+    company: '某某贸易公司',
+    phone: '13900139000',
+    address: '上海市浦东新区',
     isActive: true,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01')
@@ -67,12 +63,10 @@ const initialUsers: User[] = [
     email: 'customer2@example.com',
     password: DEFAULT_CUSTOMER_PASSWORD,
     role: 'customer',
-    profile: {
-      name: '李四',
-      company: '电商公司',
-      phone: '13700137000',
-      address: '北京市朝阳区'
-    },
+    name: '李四',
+    company: '电商公司',
+    phone: '13700137000',
+    address: '北京市朝阳区',
     isActive: true,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01')
@@ -433,12 +427,10 @@ export const mockAuthService = {
       email: userData.email,
       password: userData.password,
       role: 'customer',
-      profile: {
-        name: userData.name,
-        company: userData.company || '',
-        phone: userData.contact,
-        address: ''
-      },
+      name: userData.name,
+      company: userData.company || '',
+      phone: userData.contact,
+      address: '',
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -606,12 +598,10 @@ export const mockAuthService = {
       email: userData.email,
       password: userData.password,
       role: 'admin', // 直接设置为管理员角色
-      profile: {
-        name: userData.name,
-        company: userData.company || '',
-        phone: userData.contact,
-        address: ''
-      },
+      name: userData.name,
+      company: userData.company || '',
+      phone: userData.contact,
+      address: '',
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()

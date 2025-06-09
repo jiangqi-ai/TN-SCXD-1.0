@@ -1,0 +1,85 @@
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useDatabaseStore } from '@/store/useDatabaseStore'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+export default function DatabaseConfig() {
+  const { databaseUrl, directUrl, isConfigured, setDatabaseConfig } = useDatabaseStore()
+  const [formData, setFormData] = useState({
+    databaseUrl: databaseUrl || '',
+    directUrl: directUrl || ''
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      // 验证连接字符串格式
+      if (!formData.databaseUrl.startsWith('postgresql://')) {
+        throw new Error('数据库连接字符串必须以 postgresql:// 开头')
+      }
+
+      // 保存配置
+      setDatabaseConfig({
+        databaseUrl: formData.databaseUrl,
+        directUrl: formData.directUrl || formData.databaseUrl
+      })
+
+      toast.success('数据库配置已保存')
+      
+      // 刷新页面以应用新配置
+      window.location.reload()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '保存配置失败')
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>数据库配置</CardTitle>
+        <CardDescription>
+          配置 PostgreSQL 数据库连接信息。
+          {isConfigured && (
+            <span className="text-green-600 ml-2">
+              ✓ 已配置
+            </span>
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="databaseUrl">主数据库连接 URL</Label>
+            <Input
+              id="databaseUrl"
+              placeholder="postgresql://username:password@host:port/database"
+              value={formData.databaseUrl}
+              onChange={(e) => setFormData(prev => ({ ...prev, databaseUrl: e.target.value }))}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="directUrl">直接连接 URL（可选）</Label>
+            <Input
+              id="directUrl"
+              placeholder="postgresql://username:password@host:port/database"
+              value={formData.directUrl}
+              onChange={(e) => setFormData(prev => ({ ...prev, directUrl: e.target.value }))}
+            />
+            <p className="text-sm text-gray-500">
+              如果不填写，将使用主数据库连接 URL
+            </p>
+          </div>
+
+          <Button type="submit">
+            {isConfigured ? '更新配置' : '保存配置'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+} 

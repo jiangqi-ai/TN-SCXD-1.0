@@ -49,10 +49,11 @@ export default function CheckoutPage() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       shippingAddress: {
-        contactName: user?.profile?.name || '',
-        phone: user?.profile?.phone || '',
-        address: user?.profile?.address || '',
-        company: user?.profile?.company || '',
+        contactName: user?.name || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
+        company: user?.company || '',
+        notes: ''
       },
       paymentMethod: 'bill_confirm',
     },

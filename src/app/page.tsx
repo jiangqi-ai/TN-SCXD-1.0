@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { productService } from '@/lib/services/productService'
+import { productService } from '@/lib/services/hybridProductService'
 import { formatPrice } from '@/lib/utils/helpers'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useCartStore } from '@/store/useCartStore'
@@ -12,6 +12,7 @@ import type { Product } from '@/types'
 import { ArrowLeft, ArrowRight, CheckCircle, FileText, Package, ShoppingCart, Star, Truck, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 // 生产环境下移除调试工具
 
@@ -24,18 +25,36 @@ export default function HomePage() {
 	const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [isMounted, setIsMounted] = useState(false)
+	const [products, setProducts] = useState<Product[]>([])
+	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
 		setIsMounted(true)
 	}, [])
 
 	useEffect(() => {
+		const loadProducts = async () => {
+			try {
+				const products = await productService.getAll()
+				setProducts(products)
+			} catch (error) {
+				console.error('Failed to load products:', error)
+				toast.error('加载产品失败')
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		if (isMounted) {
+			loadProducts()
+		}
+	}, [isMounted])
+
+	useEffect(() => {
 		if (!isMounted) return
 
 		const loadFeaturedProducts = async () => {
 			try {
-				const customerType = user?.customerType
-				const products = await productService.getAll(customerType)
 				// 取前4个产品作为特色产品
 				setFeaturedProducts(products.slice(0, 4))
 				
@@ -51,7 +70,7 @@ export default function HomePage() {
 		}
 
 		loadFeaturedProducts()
-	}, [isMounted, user?.customerType])
+	}, [isMounted, products])
 
 	const ProductCard = ({ product }: { product: Product }) => (
 		<Card className="transition-shadow hover:shadow-lg">

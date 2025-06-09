@@ -62,12 +62,10 @@ export interface User {
   email: string;
   password?: string;
   role: 'admin' | 'customer';
-  profile: {
-    name: string;
-    company?: string;
-    phone?: string;
-    address?: string;
-  };
+  name: string;
+  company?: string;
+  phone?: string;
+  address?: string;
   isActive: boolean;
   lastLoginAt?: Date;
   createdAt: Date;

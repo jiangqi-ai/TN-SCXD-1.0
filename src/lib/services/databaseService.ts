@@ -279,6 +279,36 @@ export const databaseProductService = {
     return await prisma.product.delete({
       where: { id }
     })
+  },
+
+  // 批量上传产品
+  async uploadFromExcel(products: Array<{
+    name: string
+    category: string
+    brand?: string
+    model?: string
+    description?: string
+    specifications?: string
+    images: string
+    price: number
+    stock: number
+    weight?: number
+    size?: string
+    colors?: string
+    features?: string
+    certifications?: string
+    isActive?: boolean
+    isFeatured?: boolean
+    minOrderQty?: number
+  }>) {
+    // 使用事务确保所有产品要么全部上传成功，要么全部失败
+    return await prisma.$transaction(async (tx) => {
+      for (const product of products) {
+        await tx.product.create({
+          data: product
+        })
+      }
+    })
   }
 }
 

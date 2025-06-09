@@ -7,7 +7,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -74,12 +75,12 @@ export default function Navigation() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
                       <User className="mr-2 h-4 w-4" />
-                      {user?.profile.name}
+                      {user?.name}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 py-1.5 font-medium text-sm">
-                      {user?.profile.name}
+                      {user?.name}
                     </div>
                     <div className="px-2 py-1.5 text-gray-500 text-xs">
                       {user?.email}

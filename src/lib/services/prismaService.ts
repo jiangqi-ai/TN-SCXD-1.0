@@ -63,7 +63,6 @@ export async function initializeDatabase() {
           company: '上海体育馆',
           phone: '13900139000',
           address: '上海市静安区',
-          customerType: 'gym',
           isActive: true
         }
       })
@@ -76,42 +75,42 @@ export async function initializeDatabase() {
       // 创建示例产品
       const sampleProducts = [
         {
-          productCode: 'PYQ-001',
-          image: '/api/placeholder/400/300',
-          availableDimensions: JSON.stringify(['2m x 3m', '3m x 4m', '4m x 5m']),
-          weight: 50.0,
-          pieceCount: 12,
-          minimumOrderQty: 1,
-          availableColors: JSON.stringify(['红色', '蓝色', '绿色', '黄色']),
-          unitPrice: 1500.0,
-          remarks: '入门级攀岩墙，适合初学者',
-          features: JSON.stringify(['防滑表面', '安全认证', '易安装']),
-          applications: '健身房、学校、社区中心',
+          name: 'PYQ-001',
           category: 'indoor',
-          subCategory: 'beginner',
-          targetCustomers: JSON.stringify(['gym', 'school', 'community']),
-          discountable: true,
-          maxDiscount: 10.0,
-          isActive: true
+          brand: '攀岩先锋',
+          model: 'beginner',
+          description: '入门级攀岩墙，适合初学者',
+          specifications: '适合健身房、学校、社区中心',
+          images: '/api/placeholder/400/300',
+          price: 1500.0,
+          stock: 100,
+          weight: 50.0,
+          size: '2m x 3m',
+          colors: '红色,蓝色,绿色,黄色',
+          features: '防滑表面,安全认证,易安装',
+          certifications: 'ISO9001,CE',
+          isActive: true,
+          isFeatured: true,
+          minOrderQty: 1
         },
         {
-          productCode: 'PYQ-002',
-          image: '/api/placeholder/400/300',
-          availableDimensions: JSON.stringify(['3m x 5m', '4m x 6m', '5m x 8m']),
-          weight: 85.0,
-          pieceCount: 20,
-          minimumOrderQty: 1,
-          availableColors: JSON.stringify(['岩石灰', '森林绿', '天空蓝']),
-          unitPrice: 2800.0,
-          remarks: '专业级攀岩墙，适合有经验的攀岩者',
-          features: JSON.stringify(['专业握点', '可调节角度', '安全保护']),
-          applications: '专业攀岩馆、体育中心',
+          name: 'PYQ-002',
           category: 'indoor',
-          subCategory: 'professional',
-          targetCustomers: JSON.stringify(['gym', 'sports_center']),
-          discountable: true,
-          maxDiscount: 15.0,
-          isActive: true
+          brand: '攀岩先锋',
+          model: 'professional',
+          description: '专业级攀岩墙，适合有经验的攀岩者',
+          specifications: '适合专业攀岩馆、体育中心',
+          images: '/api/placeholder/400/300',
+          price: 2800.0,
+          stock: 50,
+          weight: 85.0,
+          size: '3m x 5m',
+          colors: '岩石灰,森林绿,天空蓝',
+          features: '专业握点,可调节角度,安全保护',
+          certifications: 'ISO9001,CE,UIAA',
+          isActive: true,
+          isFeatured: true,
+          minOrderQty: 1
         }
       ]
 
@@ -206,7 +205,7 @@ export const dbOrderService = {
       data: orderData,
       include: {
         items: true,
-        customer: true
+        user: true
       }
     })
   },
@@ -216,7 +215,7 @@ export const dbOrderService = {
       where: { id },
       include: {
         items: true,
-        customer: true
+        user: true
       }
     })
   },
@@ -227,7 +226,7 @@ export const dbOrderService = {
       data: orderData,
       include: {
         items: true,
-        customer: true
+        user: true
       }
     })
   },
@@ -240,11 +239,11 @@ export const dbOrderService = {
 
   async getAllOrders() {
     return await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
       include: {
         items: true,
-        customer: true
-      },
-      orderBy: { createdAt: 'desc' }
+        user: true
+      }
     })
   }
 } 

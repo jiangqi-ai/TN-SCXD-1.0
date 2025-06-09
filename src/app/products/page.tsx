@@ -46,7 +46,7 @@ export default function ProductsPage() {
     };
 
     loadProducts();
-  }, [user?.customerType]);
+  }, []);
 
   // 获取所有可用颜色
   const allColors = useMemo(() => {
