@@ -9,8 +9,21 @@ export const isVercelEnvironment = () => {
 
 export const isDatabaseAvailable = () => {
   // 从store中获取配置
-  const { isConfigured } = useDatabaseStore.getState()
-  return isConfigured
+  const { isConfigured, databaseUrl } = useDatabaseStore.getState()
+  
+  // 检查是否配置了数据库且连接字符串有效
+  if (!isConfigured || !databaseUrl) {
+    return false
+  }
+  
+  // 简单验证连接字符串格式
+  try {
+    const isValidPostgreSQL = databaseUrl.startsWith('postgresql://') || databaseUrl.startsWith('postgres://')
+    const isValidSQLite = databaseUrl.startsWith('file:')
+    return isValidPostgreSQL || isValidSQLite
+  } catch {
+    return false
+  }
 }
 
 export const getDatabaseConfig = () => {

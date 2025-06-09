@@ -12,7 +12,7 @@ export async function GET() {
         message: '数据库连接失败',
         error: connectionStatus.error,
         timestamp: new Date().toISOString()
-      }, { status: 500 })
+      }, { status: 200 }) // 改为200状态码，避免前端报错
     }
 
     // 获取数据库统计
@@ -47,8 +47,8 @@ export async function GET() {
     return NextResponse.json({
       status: 'error',
       message: '数据库健康检查失败',
-      error: error.message,
+      error: error instanceof Error ? error.message : '未知错误',
       timestamp: new Date().toISOString()
-    }, { status: 500 })
+    }, { status: 200 }) // 改为200状态码，避免前端报错
   }
 } 

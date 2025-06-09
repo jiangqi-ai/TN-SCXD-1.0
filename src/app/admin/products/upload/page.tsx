@@ -14,7 +14,7 @@ import {
   isValidCustomerType,
   isValidSubCategory 
 } from '@/lib/constants/productCategories';
-import { productService } from '@/lib/services/productService';
+import { productService } from '@/lib/services/hybridProductService';
 import { generateId, parseColors, validateNumber, validateProductCode } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { CustomerType, ExcelProductRow, Product, ProductCategory, ProductSubCategory } from '@/types';

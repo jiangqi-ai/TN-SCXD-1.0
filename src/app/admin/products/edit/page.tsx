@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { productService } from '@/lib/services/productService';
+import { productService } from '@/lib/services/hybridProductService';
 import { formatPrice } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Product } from '@/types';

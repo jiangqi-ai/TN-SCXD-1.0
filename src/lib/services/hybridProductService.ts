@@ -3,8 +3,31 @@ import { safeProductService } from './databaseServiceSafe'
 import { isDatabaseAvailable, getStorageInfo } from './vercelCompat'
 import type { CustomerType, Product, ProductCategory, ProductSubCategory } from '@/types'
 
-// 动态检测是否使用数据库
-const USE_DATABASE = isDatabaseAvailable()
+// 缓存数据库可用性检查结果
+let dbAvailabilityCache: boolean | null = null
+let lastDbCheck = 0
+const DB_CHECK_CACHE_DURATION = 30000 // 30秒缓存
+
+// 动态检测是否使用数据库的函数
+const checkDatabaseAvailable = () => {
+  const now = Date.now()
+  
+  // 使用缓存结果
+  if (dbAvailabilityCache !== null && (now - lastDbCheck) < DB_CHECK_CACHE_DURATION) {
+    return dbAvailabilityCache
+  }
+  
+  try {
+    const result = isDatabaseAvailable()
+    dbAvailabilityCache = result
+    lastDbCheck = now
+    return result
+  } catch {
+    dbAvailabilityCache = false
+    lastDbCheck = now
+    return false
+  }
+}
 
 // 在控制台输出存储信息（仅服务器端）
 if (typeof window === 'undefined') {
@@ -16,7 +39,7 @@ if (typeof window === 'undefined') {
 export const productService = {
   async getAll(customerType?: CustomerType): Promise<Product[]> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         const result = await databaseProductService.getProducts({})
         // 转换数据库产品格式为应用产品格式
         return result.products.map(dbProduct => ({
@@ -53,7 +76,7 @@ export const productService = {
 
   async getAllForAdmin(): Promise<Product[]> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         const result = await databaseProductService.getProducts({})
         // 转换数据库产品格式为应用产品格式
         return result.products.map(dbProduct => ({
@@ -89,7 +112,7 @@ export const productService = {
 
   async getById(id: string): Promise<Product | null> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         const dbProduct = await databaseProductService.getProductById(id)
         if (!dbProduct) return null
         
@@ -127,7 +150,7 @@ export const productService = {
 
   async create(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         // 转换应用产品格式为数据库产品格式
         const dbProductData = {
           name: productData.productCode,
@@ -189,7 +212,7 @@ export const productService = {
 
   async update(id: string, updates: Partial<Product>): Promise<Product> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         // 转换应用产品格式为数据库产品格式
         const dbUpdates: any = {}
         if (updates.productCode !== undefined) dbUpdates.name = updates.productCode
@@ -249,7 +272,7 @@ export const productService = {
 
   async delete(id: string): Promise<void> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         await databaseProductService.deleteProduct(id)
         // 同时删除本地存储
         try {
@@ -268,7 +291,7 @@ export const productService = {
 
   async uploadFromExcel(newProducts: Product[]): Promise<void> {
     try {
-      if (USE_DATABASE) {
+      if (checkDatabaseAvailable()) {
         // 转换应用产品格式为数据库产品格式
         const dbProducts = newProducts.map(product => ({
           name: product.productCode,
@@ -309,5 +332,5 @@ export const productService = {
 }
 
 // 导出配置检查函数
-export const getStorageType = () => USE_DATABASE ? 'database' : 'localStorage'
-export const isDatabaseMode = () => USE_DATABASE 
+export const getStorageType = () => checkDatabaseAvailable() ? 'database' : 'localStorage'
+export const isDatabaseMode = () => checkDatabaseAvailable() 

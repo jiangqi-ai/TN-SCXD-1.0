@@ -175,6 +175,8 @@ export interface RegisterData {
   company?: string;
   contact: string;
   customerType?: CustomerType;
+  role?: 'admin' | 'customer';
+  phone?: string;
 }
 
 export interface CreateOrderData {

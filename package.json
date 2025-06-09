@@ -6,13 +6,18 @@
 	"type": "module",
 	"scripts": {
 		"build": "npm run db:generate:safe && next build",
+		"build:analyze": "set ANALYZE=true && npm run build",
 		"build:vercel": "next build",
+		"build:production": "set NODE_ENV=production && npm run clean && npm run db:generate:safe && next build",
 		"check": "biome check .",
 		"check:write": "biome check --write .",
 		"dev": "next dev --turbo",
+		"dev:performance": "next dev --turbo --port 3001",
 		"start": "next start",
+		"start:production": "set NODE_ENV=production && next start",
 		"typecheck": "tsc --noEmit",
 		"clean": "rimraf .next out dist",
+		"clean:all": "rimraf .next out dist node_modules package-lock.json",
 		"db:push": "prisma db push",
 		"db:studio": "prisma studio",
 		"db:generate": "prisma generate",
@@ -20,7 +25,11 @@
 		"db:init": "node scripts/init-db.mjs",
 		"db:reset": "prisma db push --force-reset && npm run db:init",
 		"db:setup": "npm run db:generate && npm run db:push && npm run db:init",
-		"postinstall": "npm run db:generate:safe"
+		"db:migrate": "prisma migrate dev",
+		"db:deploy": "prisma migrate deploy",
+		"postinstall": "npm run db:generate:safe",
+		"performance:check": "node scripts/performance-check.js",
+		"size:analyze": "npx @next/bundle-analyzer"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^5.0.1",
@@ -65,6 +74,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
+		"@next/bundle-analyzer": "^15.2.3",
 		"@tailwindcss/postcss": "^4.0.15",
 		"@types/node": "^20.14.10",
 		"@types/react": "^19.0.0",

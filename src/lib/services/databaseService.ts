@@ -596,7 +596,11 @@ export const databaseHealthService = {
       return { status: 'connected', message: '数据库连接正常' }
     } catch (error) {
       console.error('数据库连接检查失败:', error)
-      return { status: 'error', message: '数据库连接失败', error: error.message }
+      return { 
+        status: 'error', 
+        message: '数据库连接失败', 
+        error: error instanceof Error ? error.message : '未知错误'
+      }
     }
   },
 

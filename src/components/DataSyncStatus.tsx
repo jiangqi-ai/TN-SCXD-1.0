@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { dataSyncUtils } from '@/lib/services/mockDataService'
 import { getStorageInfo } from '@/lib/services/vercelCompat'
 import { AlertTriangle, CheckCircle, Database, RefreshCw, Server } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import React from 'react'
 
 interface SyncStatus {
   synchronized: boolean
@@ -26,48 +27,70 @@ interface DatabaseStatus {
   error?: string
 }
 
-export default function DataSyncStatus() {
+// 缓存数据库状态，避免频繁请求
+let cachedDbStatus: DatabaseStatus | null = null
+let lastDbCheck = 0
+const DB_CHECK_CACHE_DURATION = 30000 // 30秒缓存
+
+const DataSyncStatus = React.memo(function DataSyncStatus() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(null)
   const [isResetting, setIsResetting] = useState(false)
   const [isCheckingDB, setIsCheckingDB] = useState(false)
 
-  const checkSyncStatus = () => {
+  const checkSyncStatus = useCallback(() => {
     const status = dataSyncUtils.checkSyncStatus()
     setSyncStatus(status)
-  }
+  }, [])
 
-  const checkDatabaseStatus = async () => {
+  const checkDatabaseStatus = useCallback(async (forceRefresh = false) => {
+    const now = Date.now()
+    
+    // 使用缓存，除非强制刷新
+    if (!forceRefresh && cachedDbStatus && (now - lastDbCheck) < DB_CHECK_CACHE_DURATION) {
+      setDatabaseStatus(cachedDbStatus)
+      return
+    }
+
     setIsCheckingDB(true)
     try {
       const response = await fetch('/api/health/database')
       const data = await response.json()
       
+      let status: DatabaseStatus
       if (response.ok) {
-        setDatabaseStatus({
+        status = {
           provider: data.database.provider,
           connected: data.database.connected,
           stats: data.database.stats
-        })
+        }
       } else {
-        setDatabaseStatus({
+        status = {
           provider: 'Unknown',
           connected: false,
           error: data.database.error
-        })
+        }
       }
+      
+      // 更新缓存
+      cachedDbStatus = status
+      lastDbCheck = now
+      setDatabaseStatus(status)
     } catch (error) {
-      setDatabaseStatus({
+      const status = {
         provider: 'Unknown',
         connected: false,
         error: error instanceof Error ? error.message : '连接失败'
-      })
+      }
+      cachedDbStatus = status
+      lastDbCheck = now
+      setDatabaseStatus(status)
     } finally {
       setIsCheckingDB(false)
     }
-  }
+  }, [])
 
-  const handleForceReset = async () => {
+  const handleForceReset = useCallback(async () => {
     setIsResetting(true)
     try {
       const success = dataSyncUtils.forceResetAllData()
@@ -85,9 +108,9 @@ export default function DataSyncStatus() {
     } finally {
       setIsResetting(false)
     }
-  }
+  }, [])
 
-  const handleManualSync = () => {
+  const handleManualSync = useCallback(() => {
     const success = dataSyncUtils.manualSync()
     if (success) {
       toast.success('同步时间戳已更新')
@@ -95,20 +118,28 @@ export default function DataSyncStatus() {
     } else {
       toast.error('手动同步失败')
     }
-  }
+  }, [checkSyncStatus])
 
+  const handleRefreshDatabase = useCallback(() => {
+    checkDatabaseStatus(true) // 强制刷新
+  }, [checkDatabaseStatus])
+
+  // 初始化时加载数据
   useEffect(() => {
     checkSyncStatus()
     checkDatabaseStatus()
-    // 每30秒检查一次状态
+  }, [checkSyncStatus, checkDatabaseStatus])
+
+  // 减少定时器频率，从30秒改为60秒
+  useEffect(() => {
     const interval = setInterval(() => {
       checkSyncStatus()
-      checkDatabaseStatus()
-    }, 30000)
+      checkDatabaseStatus() // 这里会使用缓存
+    }, 60000) // 60秒
     return () => clearInterval(interval)
-  }, [])
+  }, [checkSyncStatus, checkDatabaseStatus])
 
-  const storageInfo = getStorageInfo()
+  const storageInfo = useMemo(() => getStorageInfo(), [])
   const isUsingDatabase = storageInfo.useDatabase
 
   if (!syncStatus) {
@@ -130,6 +161,19 @@ export default function DataSyncStatus() {
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
             数据库状态
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefreshDatabase}
+              disabled={isCheckingDB}
+              className="ml-auto"
+            >
+              {isCheckingDB ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -199,124 +243,74 @@ export default function DataSyncStatus() {
 
           <div className="flex gap-2">
             <Button
-              size="sm"
               variant="outline"
-              onClick={checkDatabaseStatus}
-              disabled={isCheckingDB}
-              className="text-xs"
+              size="sm"
+              onClick={handleManualSync}
+              className="flex-1"
             >
-              <RefreshCw className={`mr-1 h-3 w-3 ${isCheckingDB ? 'animate-spin' : ''}`} />
-              检查连接
+              手动同步
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleForceReset}
+              disabled={isResetting}
+              className="flex-1"
+            >
+              {isResetting ? '重置中...' : '重置数据'}
             </Button>
           </div>
-
-          {isUsingDatabase && !databaseStatus?.connected && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <p className="text-amber-800 text-sm">
-                <strong>注意:</strong> 数据库连接失败，系统可能无法正常工作。请检查数据库配置。
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* 数据同步状态（仅在使用本地存储时显示） */}
-      {!isUsingDatabase && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              数据同步状态
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* 同步状态 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {syncStatus.synchronized ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            )}
+            数据同步状态
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {syncStatus.synchronized ? (
-                  <>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="font-medium text-sm">数据已同步</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-5 w-5 text-orange-500" />
-                    <span className="font-medium text-sm">数据需要同步</span>
-                  </>
-                )}
-              </div>
-              <Badge variant={syncStatus.synchronized ? "default" : "destructive"}>
-                {syncStatus.synchronized ? "正常" : "异常"}
+              <span className="text-sm">同步状态:</span>
+              <Badge variant={syncStatus.synchronized ? "default" : "secondary"}>
+                {syncStatus.synchronized ? "已同步" : "未同步"}
               </Badge>
             </div>
-
+            
             {syncStatus.reason && (
-              <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                <p className="text-orange-800 text-sm">
-                  <strong>原因:</strong> {syncStatus.reason}
-                </p>
+              <div>
+                <span className="text-sm font-medium">说明:</span>
+                <p className="text-gray-600 text-sm">{syncStatus.reason}</p>
               </div>
             )}
-
+            
             {syncStatus.lastSyncTime && (
-              <div className="text-gray-600 text-sm">
-                <strong>最后同步:</strong> {syncStatus.lastSyncTime}
+              <div>
+                <span className="text-sm font-medium">最后同步:</span>
+                <p className="text-gray-600 text-sm">{syncStatus.lastSyncTime}</p>
               </div>
             )}
-
+            
             {syncStatus.version && (
-              <div className="text-gray-600 text-sm">
-                <strong>数据版本:</strong> {syncStatus.version}
+              <div>
+                <span className="text-sm font-medium">数据版本:</span>
+                <p className="text-gray-600 text-sm">{syncStatus.version}</p>
               </div>
             )}
-
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={checkSyncStatus}
-                className="text-xs"
-              >
-                <RefreshCw className="mr-1 h-3 w-3" />
-                检查状态
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleManualSync}
-                className="text-xs"
-              >
-                手动同步
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={handleForceReset}
-                disabled={isResetting}
-                className="text-xs"
-              >
-                {isResetting ? (
-                  <>
-                    <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
-                    重置中...
-                  </>
-                ) : (
-                  '重置数据'
-                )}
-              </Button>
-            </div>
-
-            {!syncStatus.synchronized && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-blue-800 text-sm">
-                  <strong>建议操作:</strong> 如果多个用户报告数据不同步，建议使用"重置数据"功能统一所有数据到最新状态。
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
-} 
+})
+
+DataSyncStatus.displayName = 'DataSyncStatus'
+
+export default DataSyncStatus

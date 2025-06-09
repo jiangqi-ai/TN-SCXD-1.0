@@ -4,17 +4,94 @@ import Navigation from '@/components/Navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { productService } from '@/lib/services/hybridProductService'
+// 移除直接导入数据库服务，改为通过API调用
 import { formatPrice } from '@/lib/utils/helpers'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useCartStore } from '@/store/useCartStore'
 import type { Product } from '@/types'
 import { ArrowLeft, ArrowRight, CheckCircle, FileText, Package, ShoppingCart, Star, Truck, User, Users } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import React from 'react'
 
 // 生产环境下移除调试工具
+
+// 使用 React.memo 优化产品卡片组件
+const ProductCard = React.memo(({ product }: { product: Product }) => (
+	<Card className="transition-shadow hover:shadow-lg">
+		<CardHeader className="pb-3">
+			<div className="relative mb-3 aspect-square rounded-lg bg-gray-100 sm:aspect-square md:aspect-[4/3] lg:aspect-square">
+				{product.image ? (
+					<img
+						src={product.image}
+						alt={product.productCode}
+						className="h-full w-full rounded-lg object-cover"
+						loading="lazy"
+						onError={(e) => {
+							(e.target as HTMLImageElement).style.display = 'none'
+						}}
+					/>
+				) : (
+					<div className="flex h-full w-full items-center justify-center text-gray-400">
+						<Package className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" />
+					</div>
+				)}
+			</div>
+			<CardTitle className="text-base sm:text-lg md:text-lg">{product.productCode}</CardTitle>
+		</CardHeader>
+		<CardContent>
+			<div className="space-y-2 text-gray-600 text-sm sm:text-base md:text-sm">
+				<p>尺寸: {product.availableDimensions.join(', ')}</p>
+				<p>重量: {product.weight}kg</p>
+				<p>包含: {product.pieceCount}个</p>
+				<div className="mt-2 flex flex-wrap gap-1">
+					{product.availableColors.map(color => (
+						<Badge key={color} variant="secondary" className="text-xs sm:text-sm md:text-xs">
+							{color}
+						</Badge>
+					))}
+				</div>
+			</div>
+			<div className="mt-4 border-t pt-4">
+				<div className="flex items-center justify-between">
+					<div>
+						<p className="font-bold text-base text-primary sm:text-lg md:text-lg">
+							{formatPrice(product.unitPrice)}
+						</p>
+						<p className="text-gray-500 text-xs sm:text-sm md:text-xs">
+							起订: {product.minimumOrderQty}件
+						</p>
+					</div>
+					<Link href={`/products/${product.id}`}>
+						<Button size="sm" className="text-xs sm:text-sm md:text-sm">查看详情</Button>
+					</Link>
+				</div>
+			</div>
+		</CardContent>
+	</Card>
+), (prevProps, nextProps) => prevProps.product.id === nextProps.product.id)
+
+ProductCard.displayName = 'ProductCard'
+
+// 骨架屏组件
+const ProductSkeleton = React.memo(() => (
+	<Card className="animate-pulse">
+		<CardHeader>
+			<div className="mb-3 aspect-square rounded-lg bg-gray-200" />
+			<div className="h-4 rounded bg-gray-200" />
+		</CardHeader>
+		<CardContent>
+			<div className="space-y-2">
+				<div className="h-3 rounded bg-gray-200" />
+				<div className="h-3 rounded bg-gray-200" />
+				<div className="h-3 w-2/3 rounded bg-gray-200" />
+			</div>
+		</CardContent>
+	</Card>
+))
+
+ProductSkeleton.displayName = 'ProductSkeleton'
 
 /**
  * @description 这只是个示例页面，你可以随意修改这个页面或进行全面重构
@@ -26,101 +103,60 @@ export default function HomePage() {
 	const [isLoading, setIsLoading] = useState(true)
 	const [isMounted, setIsMounted] = useState(false)
 	const [products, setProducts] = useState<Product[]>([])
-	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
 		setIsMounted(true)
 	}, [])
 
-	useEffect(() => {
-		const loadProducts = async () => {
-			try {
-				const products = await productService.getAll()
-				setProducts(products)
-			} catch (error) {
-				console.error('Failed to load products:', error)
-				toast.error('加载产品失败')
-			} finally {
-				setLoading(false)
+	// 使用 useCallback 优化数据加载函数
+	const loadProducts = useCallback(async () => {
+		if (!isMounted) return
+		
+		try {
+			// 只获取前8个产品用于首页展示，减少数据传输
+			const response = await fetch('/api/products?limit=8&featured=true')
+			if (!response.ok) {
+				throw new Error('Failed to fetch products')
 			}
-		}
-
-		if (isMounted) {
-			loadProducts()
+			const products = await response.json()
+			setProducts(products)
+			// 直接设置特色产品，避免额外的useEffect
+			setFeaturedProducts(products.slice(0, 4))
+		} catch (error) {
+			console.error('Failed to load products:', error)
+			toast.error('加载产品失败')
+		} finally {
+			setIsLoading(false)
 		}
 	}, [isMounted])
 
 	useEffect(() => {
-		if (!isMounted) return
-
-		const loadFeaturedProducts = async () => {
-			try {
-				// 取前4个产品作为特色产品
-				setFeaturedProducts(products.slice(0, 4))
-				
-				// 如果没有产品数据，提示联系管理员
-				if (products.length === 0) {
-					console.log('💡 暂无产品数据，请联系管理员上传产品或配置云端同步');
-				}
-			} catch (error) {
-				console.error('Failed to load featured products:', error)
-			} finally {
-				setIsLoading(false)
-			}
+		if (isMounted) {
+			loadProducts()
 		}
+	}, [isMounted, loadProducts])
 
-		loadFeaturedProducts()
-	}, [isMounted, products])
+	// 使用 useMemo 优化渲染逻辑
+	const skeletonArray = useMemo(() => Array(4).fill(null), [])
 
-	const ProductCard = ({ product }: { product: Product }) => (
-		<Card className="transition-shadow hover:shadow-lg">
-			<CardHeader className="pb-3">
-				<div className="relative mb-3 aspect-square rounded-lg bg-gray-100 sm:aspect-square md:aspect-[4/3] lg:aspect-square">
-					{product.image ? (
-						<img
-							src={product.image}
-							alt={product.productCode}
-							className="h-full w-full rounded-lg object-cover"
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center text-gray-400">
-							<Package className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" />
-						</div>
-					)}
-				</div>
-				<CardTitle className="text-base sm:text-lg md:text-lg">{product.productCode}</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div className="space-y-2 text-gray-600 text-sm sm:text-base md:text-sm">
-					<p>尺寸: {product.availableDimensions.join(', ')}</p>
-					<p>重量: {product.weight}kg</p>
-					<p>包含: {product.pieceCount}个</p>
-					<div className="mt-2 flex flex-wrap gap-1">
-						{product.availableColors.map(color => (
-							<Badge key={color} variant="secondary" className="text-xs sm:text-sm md:text-xs">
-								{color}
-							</Badge>
-						))}
-					</div>
-				</div>
-				<div className="mt-4 border-t pt-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="font-bold text-base text-primary sm:text-lg md:text-lg">
-								{formatPrice(product.unitPrice)}
-							</p>
-							<p className="text-gray-500 text-xs sm:text-sm md:text-xs">
-								起订: {product.minimumOrderQty}件
-							</p>
-						</div>
-						<Link href={`/products/${product.id}`}>
-							<Button size="sm" className="text-xs sm:text-sm md:text-sm">查看详情</Button>
-						</Link>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	)
+	// 功能卡片数据（静态数据，可以提取到组件外部）
+	const featureCards = useMemo(() => [
+		{
+			icon: Package,
+			title: '多种规格',
+			description: '提供多种尺寸和规格选择，满足不同的订单需求'
+		},
+		{
+			icon: ShoppingCart,
+			title: '在线下单',
+			description: '便捷的在线下单系统，实时跟踪订单状态'
+		},
+		{
+			icon: FileText,
+			title: '快速生产',
+			description: '专业生产线，确保产品质量和交货时间'
+		}
+	], [])
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -141,27 +177,15 @@ export default function HomePage() {
 
 				{/* 功能特色 */}
 				<div className="mb-8 grid grid-cols-1 gap-4 sm:mb-10 sm:grid-cols-2 sm:gap-6 lg:mb-12 lg:grid-cols-3">
-					<Card>
-						<CardContent className="p-4 text-center sm:p-6">
-							<Package className="mx-auto mb-3 h-10 w-10 text-primary sm:mb-4 sm:h-12 sm:w-12" />
-							<h3 className="mb-2 font-semibold text-base sm:text-lg">多种规格</h3>
-							<p className="text-gray-600 text-sm sm:text-base">提供多种尺寸和规格选择，满足不同的订单需求</p>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardContent className="p-4 text-center sm:p-6">
-							<ShoppingCart className="mx-auto mb-3 h-10 w-10 text-primary sm:mb-4 sm:h-12 sm:w-12" />
-							<h3 className="mb-2 font-semibold text-base sm:text-lg">在线下单</h3>
-							<p className="text-gray-600 text-sm sm:text-base">便捷的在线下单系统，实时跟踪订单状态</p>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardContent className="p-4 text-center sm:p-6">
-							<FileText className="mx-auto mb-3 h-10 w-10 text-primary sm:mb-4 sm:h-12 sm:w-12" />
-							<h3 className="mb-2 font-semibold text-base sm:text-lg">快速生产</h3>
-							<p className="text-gray-600 text-sm sm:text-base">专业生产线，确保产品质量和交货时间</p>
-						</CardContent>
-					</Card>
+					{featureCards.map((feature, index) => (
+						<Card key={index}>
+							<CardContent className="p-4 text-center sm:p-6">
+								<feature.icon className="mx-auto mb-3 h-10 w-10 text-primary sm:mb-4 sm:h-12 sm:w-12" />
+								<h3 className="mb-2 font-semibold text-base sm:text-lg">{feature.title}</h3>
+								<p className="text-gray-600 text-sm sm:text-base">{feature.description}</p>
+							</CardContent>
+						</Card>
+					))}
 				</div>
 
 				{/* 热门产品 */}
@@ -175,20 +199,8 @@ export default function HomePage() {
 					
 					{isLoading ? (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-							{[...Array(4)].map((_, i) => (
-								<Card key={i} className="animate-pulse">
-									<CardHeader>
-										<div className="mb-3 aspect-square rounded-lg bg-gray-200" />
-										<div className="h-4 rounded bg-gray-200" />
-									</CardHeader>
-									<CardContent>
-										<div className="space-y-2">
-											<div className="h-3 rounded bg-gray-200" />
-											<div className="h-3 rounded bg-gray-200" />
-											<div className="h-3 w-2/3 rounded bg-gray-200" />
-										</div>
-									</CardContent>
-								</Card>
+							{skeletonArray.map((_, i) => (
+								<ProductSkeleton key={i} />
 							))}
 						</div>
 					) : featuredProducts.length > 0 ? (
