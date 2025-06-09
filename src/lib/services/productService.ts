@@ -1,8 +1,7 @@
 import { generateId } from "@/lib/utils/helpers";
 import type { CustomerType, Product } from '@/types';
-import { cloudSyncService } from './cloudSyncService';
 
-// 空的初始产品数据 - 所有产品通过管理员上传和云端同步
+// 空的初始产品数据 - 所有产品通过管理员上传
 const initialProducts: Product[] = [];
 
 // 存储键名
@@ -49,19 +48,6 @@ export const productService = {
       return initialProducts;
     }
     
-    // 优先从云端同步最新数据
-    if (cloudSyncService.isCloudSyncEnabled()) {
-      try {
-        const cloudProducts = await cloudSyncService.fetchFromCloud();
-        storage.setProducts(cloudProducts);
-        console.log('✅ 用户获取到云端最新产品数据');
-      } catch (error) {
-        console.log('⚠️ 用户云端同步失败，使用本地数据:', error instanceof Error ? error.message : '未知错误');
-      }
-    } else {
-      console.log('💡 云端同步未启用，如无产品数据请联系管理员配置');
-    }
-    
     const products = storage.getProducts();
     let filteredProducts = products.filter(p => p.isActive);
     
@@ -90,17 +76,6 @@ export const productService = {
       return initialProducts;
     }
     
-    // 管理员也需要从云端同步最新数据
-    if (cloudSyncService.isCloudSyncEnabled()) {
-      try {
-        const cloudProducts = await cloudSyncService.fetchFromCloud();
-        storage.setProducts(cloudProducts);
-        console.log('✅ 管理员获取到云端最新产品数据');
-      } catch (error) {
-        console.log('⚠️ 管理员云端同步失败，使用本地数据:', error instanceof Error ? error.message : '未知错误');
-      }
-    }
-    
     const products = storage.getProducts();
     return products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
@@ -124,9 +99,6 @@ export const productService = {
     products.push(newProduct);
     storage.setProducts(products);
     
-    // 同步到云端
-    await cloudSyncService.syncToCloud(products);
-    
     return newProduct;
   },
 
@@ -146,9 +118,6 @@ export const productService = {
     };
     storage.setProducts(products);
     
-    // 同步到云端
-    await cloudSyncService.syncToCloud(products);
-    
     return products[index]!;
   },
 
@@ -160,9 +129,6 @@ export const productService = {
     
     products.splice(index, 1);
     storage.setProducts(products);
-    
-    // 同步到云端
-    await cloudSyncService.syncToCloud(products);
   },
 
   async uploadFromExcel(newProducts: Product[]): Promise<void> {
@@ -170,8 +136,5 @@ export const productService = {
     const products = storage.getProducts();
     products.unshift(...newProducts);
     storage.setProducts(products);
-    
-    // 同步到云端
-    await cloudSyncService.syncToCloud(products);
   }
 }; 

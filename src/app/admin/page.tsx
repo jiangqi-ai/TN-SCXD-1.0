@@ -1,6 +1,5 @@
 'use client';
 
-import CloudSyncConfig from '@/components/CloudSyncConfig';
 import DataSyncStatus from '@/components/DataSyncStatus';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { mockAuthService, mockOrderService } from '@/lib/services/mockDataService';
-import { productService } from '@/lib/services/productService';
 import { exportContractToPDF, generateContractFromOrder } from '@/lib/utils/contractUtils';
 import { exportOrdersToExcel, exportOrdersToPDF, generatePrintableOrdersHTML } from '@/lib/utils/exportUtils';
 import { formatDate, formatPrice, getOrderStatusColor, getOrderStatusText } from '@/lib/utils/helpers';
@@ -137,12 +135,18 @@ export default function AdminPage() {
 
     const loadData = async () => {
       try {
-        const [ordersData, customersData, allUsersData, productsData] = await Promise.all([
+        const [ordersData, customersData, allUsersData, productsResponse] = await Promise.all([
           mockOrderService.getAll(),
           mockAuthService.getAllCustomers(),
           mockAuthService.getAllUsers(user.id), // 获取所有用户（包括管理员）
-          productService.getAllForAdmin(),
+          fetch('/api/products?admin=true'),
         ]);
+
+        if (!productsResponse.ok) {
+          throw new Error('获取产品列表失败');
+        }
+
+        const productsData = await productsResponse.json();
 
         setOrders(ordersData);
         setCustomers(customersData);
@@ -651,8 +655,20 @@ ${itemsDetails}
   const handleToggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
       setTogglingProductId(productId);
-              const updatedProduct = await productService.update(productId, { isActive: !currentStatus });
-      setProducts(products.map(p => p.id === productId ? updatedProduct : p));
+      
+      const response = await fetch(`/api/products/${productId}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('更新产品状态失败');
+      }
+      
+      setProducts(products.map(p => p.id === productId ? { ...p, isActive: !currentStatus } : p));
       toast.success(currentStatus ? '产品已禁用' : '产品已启用');
     } catch (error) {
       console.error('Failed to toggle product status:', error);
@@ -1341,9 +1357,6 @@ ${itemsDetails}
           {/* 系统设置 */}
           <TabsContent value="settings">
             <div className="space-y-6">
-              {/* 云同步配置 */}
-              <CloudSyncConfig />
-              
               {/* 数据同步状态 */}
               <DataSyncStatus />
               

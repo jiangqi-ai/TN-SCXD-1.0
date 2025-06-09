@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { productService } from '@/lib/services/productService';
+// import { productService, getStorageType } from '@/lib/services/hybridProductService';
 import { debounce, formatPrice } from '@/lib/utils/helpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -29,10 +29,14 @@ export default function ProductsPage() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        // 如果用户已登录且有客户类型，只获取对应的产品
-        const customerType = user?.customerType;
-        const data = await productService.getAll(customerType);
+        console.log('🔄 加载产品...');
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+          throw new Error('获取产品列表失败');
+        }
+        const data = await response.json();
         setProducts(data);
+        console.log('✅ 产品加载成功:', data.length, '个产品');
       } catch (error) {
         console.error('Failed to load products:', error);
         toast.error('加载产品失败');

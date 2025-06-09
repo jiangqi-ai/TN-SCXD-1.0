@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  email        String    @unique
+  password     String
+  role         String    // 'admin' | 'customer'
+  name         String
+  company      String?
+  phone        String?
+  address      String?
+  isActive     Boolean   @default(true)
+  customerType String?   // CustomerType for customers
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 关系
+  orders       Order[]
+  contracts    Contract[]
+
+  @@map("users")
+}
+
+// 产品表
+model Product {
+  id                   String   @id @default(cuid())
+  productCode          String   @unique
+  image                String
+  availableDimensions  String   // JSON string array
+  weight               Float
+  pieceCount           Int
+  minimumOrderQty      Int
+  availableColors      String   // JSON string array
+  unitPrice            Float
+  remarks              String?
+  features             String?  // JSON string array
+  applications         String?
+  isActive             Boolean  @default(true)
+  category             String   // ProductCategory
+  subCategory          String   // ProductSubCategory
+  targetCustomers      String   // JSON string array of CustomerType
+  discountable         Boolean  @default(false)
+  maxDiscount          Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // 关系
+  orderItems           OrderItem[]
+
+  @@map("products")
+}
+
+// 订单表
+model Order {
+  id                   String    @id @default(cuid())
+  orderNumber          String    @unique
+  customerId           String
+  customerName         String
+  customerCompany      String
+  customerContact      String
+  customerEmail        String
+  deliveryAddress      String
+  specialRequirements  String?
+  totalAmount          Float
+  originalAmount       Float
+  discountAmount       Float
+  status               String    // 'pending' | 'confirmed' | 'production' | 'completed' | 'cancelled'
+  orderDate            DateTime  @default(now())
+  confirmedAt          DateTime?
+  productionStartedAt  DateTime?
+  deliveryDate         DateTime?
+  completedAt          DateTime?
+  paymentMethod        String    @default("bill_confirm")
+  productionNotes      String?
+  approvedBy           String?
+  approvedAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // 关系
+  customer             User      @relation(fields: [customerId], references: [id])
+  items                OrderItem[]
+  contracts            Contract[]
+
+  @@map("orders")
+}
+
+// 订单项表
+model OrderItem {
+  id               String  @id @default(cuid())
+  orderId          String
+  productId        String
+  productCode      String
+  productName      String
+  image            String
+  selectedDimension String
+  weight           Float
+  pieceCount       Int
+  selectedColor    String
+  quantity         Int
+  unitPrice        Float
+  originalPrice    Float
+  discountedPrice  Float
+  discount         Float   @default(0)
+  discountable     Boolean @default(false)
+  maxDiscount      Float   @default(0)
+  subtotal         Float
+
+  // 关系
+  order            Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// 合同表
+model Contract {
+  id              String   @id @default(cuid())
+  contractNumber  String   @unique
+  orderId         String
+  orderNumber     String
+  customerName    String
+  customerCompany String
+  customerContact String
+  customerEmail   String
+  deliveryAddress String
+  totalAmount     Float
+  originalAmount  Float
+  discountAmount  Float
+  terms           String   // 合同条款
+  deliveryDate    DateTime
+  createdBy       String
+  signedAt        DateTime?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // 关系
+  order           Order    @relation(fields: [orderId], references: [id])
+  creator         User     @relation(fields: [createdBy], references: [id])
+
+  @@map("contracts")
+}

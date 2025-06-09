@@ -56,3 +56,5 @@ logs
 # temp files
 temp/
 tmp/
+
+/generated/prisma
