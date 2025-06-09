@@ -1,10 +1,14 @@
-import { PrismaClient } from '../generated/prisma/index.js'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function initializeDatabase() {
   try {
     console.log('开始初始化数据库...')
+    
+    // 检查数据库连接
+    await prisma.$connect()
+    console.log('✅ 数据库连接成功')
     
     // 检查是否已有管理员用户
     const adminUser = await prisma.user.findUnique({
@@ -113,6 +117,7 @@ async function initializeDatabase() {
     return true
   } catch (error) {
     console.error('❌ 数据库初始化失败:', error)
+    console.error('错误详情:', error.message)
     return false
   } finally {
     await prisma.$disconnect()

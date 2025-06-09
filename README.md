@@ -114,7 +114,57 @@ TN-SCXD-1.0/
 └── public/                    # 静态资源
 ```
 
-## 🗄️ 数据库管理
+## 🗄️ 数据库
+
+项目支持 PostgreSQL (推荐用于生产环境) 和 SQLite (用于本地开发)。
+
+### 📚 相关文档
+
+- **🚀 [完整部署指南](./DEPLOYMENT_GUIDE.md)** - 从 SQLite 迁移到 PostgreSQL 的完整步骤
+- **⚙️ [Vercel Postgres 配置](./VERCEL_POSTGRES_SETUP.md)** - 详细的数据库配置指南
+
+### Vercel Postgres 部署（推荐）
+
+为了实现真正的数据同步，建议使用 Vercel Postgres：
+
+1. **配置 Vercel Postgres**：请参考 [部署指南](./DEPLOYMENT_GUIDE.md) 获取完整步骤
+
+2. **快速设置**：
+```bash
+# 下载 Vercel 环境变量
+vercel env pull .env.local
+
+# 生成 Prisma Client
+npm run db:generate
+
+# 推送数据库架构
+npm run db:push
+
+# 初始化默认数据
+npm run db:init
+```
+
+### 本地开发
+
+对于本地开发，你可以：
+
+1. **连接到 Vercel Postgres**（推荐）：
+```bash
+vercel env pull .env.local
+npm run db:generate
+npm run dev
+```
+
+2. **使用本地 SQLite**：
+```bash
+# 在 .env.local 中设置
+DATABASE_URL="file:./prisma/dev.db"
+
+# 生成并初始化
+npm run db:generate
+npm run db:push
+npm run db:init
+```
 
 ### 常用命令
 ```bash
@@ -126,6 +176,12 @@ npm run db:reset
 
 # 重新初始化数据
 npm run db:init
+
+# 生成 Prisma Client
+npm run db:generate
+
+# 推送数据库架构
+npm run db:push
 ```
 
 ### 数据模型
@@ -180,9 +236,18 @@ npm start
 ```
 
 ### 环境变量
-项目使用 `.env` 文件配置数据库连接：
+
+- **生产环境 (Vercel)**：
 ```
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL=<POSTGRES_PRISMA_URL>
+DIRECT_URL=<POSTGRES_URL_NON_POOLING>
+```
+
+- **本地开发**：
+```
+DATABASE_URL="file:./prisma/dev.db"  # SQLite
+# 或
+DATABASE_URL=<PostgreSQL_连接字符串>  # PostgreSQL
 ```
 
 ## 📄 许可证

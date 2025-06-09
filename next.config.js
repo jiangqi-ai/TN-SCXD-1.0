@@ -25,14 +25,8 @@ const nextConfig = {
     if (isServer) {
       // 配置外部依赖
       config.externals = config.externals || []
-      if (process.env.VERCEL === '1') {
-        config.externals.push('@prisma/client')
-      }
     }
     return config
-  },
-  env: {
-    DISABLE_DATABASE: process.env.VERCEL === '1' ? 'true' : 'false',
   },
 };
 
