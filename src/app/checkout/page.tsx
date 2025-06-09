@@ -84,7 +84,13 @@ export default function CheckoutPage() {
           unitPrice: item.unitPrice,
           discount: 0, // 默认无折扣，管理员可在审核时调整
         })),
-        shippingAddress: data.shippingAddress,
+        shippingAddress: {
+          contactName: data.shippingAddress.contactName,
+          phone: data.shippingAddress.phone,
+          address: data.shippingAddress.address,
+          company: data.shippingAddress.company || '',
+          notes: data.shippingAddress.notes || '',
+        },
         paymentMethod: data.paymentMethod,
         totalAmount: getTotalAmount(),
         originalAmount: getTotalAmount(), // 原价等于总价

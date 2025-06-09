@@ -11,15 +11,15 @@
 		"verbatimModuleSyntax": true,
 
 		/* Strictness */
-		"strict": true,
+		"strict": false,
 		"noUncheckedIndexedAccess": true,
 		"checkJs": true,
 
 		/* Bundled projects */
-		"lib": ["dom", "dom.iterable", "ES2022"],
+		"lib": ["dom", "dom.iterable", "ES6"],
 		"noEmit": true,
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
+		"module": "esnext",
+		"moduleResolution": "bundler",
 		"jsx": "preserve",
 		"plugins": [{ "name": "next" }],
 		"incremental": true,

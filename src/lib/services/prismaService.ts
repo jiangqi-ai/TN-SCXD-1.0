@@ -1,13 +1,23 @@
 import { PrismaClient } from '@prisma/client'
+import { isVercelEnvironment } from './vercelCompat'
 
 // 创建 Prisma 客户端单例
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const prisma = globalForPrisma.prisma ?? new PrismaClient()
+// 在Vercel环境下，禁用Prisma或使用更安全的配置
+let prisma: PrismaClient | null = null
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+try {
+  if (!isVercelEnvironment()) {
+    prisma = globalForPrisma.prisma ?? new PrismaClient()
+    if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+  }
+} catch (error) {
+  console.warn('Prisma客户端初始化失败，将使用localStorage:', error)
+  prisma = null
+}
 
 export { prisma }
 

@@ -4,55 +4,36 @@
  */
 import "./src/env.js";
 
-/** @type {import("next").NextConfig} */
-const config = {
-  // 图片配置
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
+    domains: [
+      'images.unsplash.com',
+      'picsum.photos',
+      'placeholder.com',
+      'via.placeholder.com'
+    ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+        hostname: '**',
       },
     ],
   },
-  
-  // 构建优化
-  experimental: {
-    optimizePackageImports: ['lucide-react'],
-  },
-  
-  // 压缩和优化配置
-  compress: true,
-  poweredByHeader: false,
-  
-  // 构建配置
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  
-  // Webpack配置优化
+  serverExternalPackages: ['@prisma/client'],
   webpack: (config, { isServer }) => {
-    // 代码分割优化
-    if (!isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      };
+    if (isServer) {
+      // 配置外部依赖
+      config.externals = config.externals || []
+      if (process.env.VERCEL === '1') {
+        config.externals.push('@prisma/client')
+      }
     }
-    
-    return config;
+    return config
+  },
+  env: {
+    DISABLE_DATABASE: process.env.VERCEL === '1' ? 'true' : 'false',
   },
 };
 
-export default config;
+export default nextConfig;

@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './prismaService'
+import { isVercelEnvironment } from './vercelCompat'
 import { generateId, generateOrderId } from "@/lib/utils/helpers"
 import type { 
   CreateOrderRequest, 
@@ -12,14 +13,10 @@ import type {
 } from '@/types'
 import { securityService } from './securityService'
 
-// 创建 Prisma 客户端单例
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+// 检查Prisma是否可用
+const isPrismaAvailable = () => {
+  return prisma !== null && !isVercelEnvironment()
 }
-
-const prisma = globalForPrisma.prisma ?? new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 // 工具函数
 const simulateDelay = (ms: number): Promise<void> => {
@@ -126,8 +123,12 @@ export const databaseUserService = {
   async login(credentials: LoginCredentials): Promise<User> {
     await simulateDelay(300)
     
+    if (!isPrismaAvailable()) {
+      throw new Error('数据库不可用')
+    }
+    
     try {
-      const dbUser = await prisma.user.findUnique({
+      const dbUser = await prisma!.user.findUnique({
         where: { username: credentials.username }
       })
 
@@ -141,7 +142,7 @@ export const databaseUserService = {
       }
 
       // 更新最后登录时间
-      await prisma.user.update({
+      await prisma!.user.update({
         where: { id: dbUser.id },
         data: { lastLoginAt: new Date() }
       })

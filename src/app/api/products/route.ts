@@ -1,4 +1,4 @@
-import { productService } from '@/lib/services/hybridProductService'
+import { safeProductService as productService } from '@/lib/services/databaseServiceSafe'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
