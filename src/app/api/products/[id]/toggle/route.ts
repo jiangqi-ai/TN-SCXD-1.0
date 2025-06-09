@@ -1,4 +1,4 @@
-import { safeProductService as productService } from '@/lib/services/databaseServiceSafe'
+import { databaseProductService } from '@/lib/services/databaseService'
 import { NextResponse } from 'next/server'
 
 export async function PATCH(
@@ -9,7 +9,7 @@ export async function PATCH(
     const { isActive } = await request.json()
     const resolvedParams = await params
     
-    await productService.update(resolvedParams.id, { isActive })
+    await databaseProductService.updateProduct(resolvedParams.id, { isActive })
     
     return NextResponse.json({ success: true })
   } catch (error) {
