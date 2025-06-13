@@ -1,6 +1,6 @@
 import { databaseProductService } from './databaseService'
 import { safeProductService } from './databaseServiceSafe'
-import { isDatabaseAvailable, getStorageInfo } from './vercelCompat'
+import { isDatabaseAvailable, getStorageInfo, initializeEnvironment } from './vercelCompat'
 import type { CustomerType, Product, ProductCategory, ProductSubCategory } from '@/types'
 
 // 缓存数据库可用性检查结果
@@ -18,6 +18,8 @@ const checkDatabaseAvailable = () => {
   }
   
   try {
+    // 确保环境变量已设置
+    initializeEnvironment()
     const result = isDatabaseAvailable()
     dbAvailabilityCache = result
     lastDbCheck = now
@@ -291,7 +293,14 @@ export const productService = {
 
   async uploadFromExcel(newProducts: Product[]): Promise<void> {
     try {
+      console.log('开始批量上传产品，数量:', newProducts.length)
+      
       if (checkDatabaseAvailable()) {
+        console.log('使用数据库模式进行批量上传')
+        
+        // 确保环境变量正确设置
+        initializeEnvironment()
+        
         // 转换应用产品格式为数据库产品格式
         const dbProducts = newProducts.map(product => ({
           name: product.productCode,
@@ -313,19 +322,35 @@ export const productService = {
           minOrderQty: product.minimumOrderQty
         }))
         
+        console.log('开始数据库批量插入')
         await databaseProductService.uploadFromExcel(dbProducts)
+        console.log('数据库批量插入成功')
         
         // 同时更新本地存储
         try {
           await safeProductService.uploadFromExcel(newProducts)
-        } catch {
-          // 如果本地更新失败，不影响数据库结果
+          console.log('本地存储同步成功')
+        } catch (localError) {
+          console.warn('本地存储同步失败，但不影响数据库结果:', localError)
         }
       } else {
+        console.log('使用本地存储模式进行批量上传')
         await safeProductService.uploadFromExcel(newProducts)
+        console.log('本地存储批量上传成功')
       }
     } catch (error) {
       console.error('产品批量上传错误:', error)
+      console.error('错误堆栈:', error.stack)
+      
+      // 提供更详细的错误信息
+      if (error.message.includes('Environment variable not found')) {
+        throw new Error('数据库环境变量未配置，请检查数据库连接设置')
+      } else if (error.code === 'P1001') {
+        throw new Error('无法连接到数据库，请检查数据库连接字符串')
+      } else if (error.code?.startsWith('P')) {
+        throw new Error(`数据库操作失败: ${error.message}`)
+      }
+      
       throw error
     }
   }

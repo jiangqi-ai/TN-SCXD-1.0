@@ -6,6 +6,66 @@ import { Label } from '@/components/ui/label'
 import { useDatabaseStore } from '@/store/useDatabaseStore'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+
+// 数据库连接测试组件
+function TestDatabaseConnection() {
+  const [testing, setTesting] = useState(false)
+  const [lastTestResult, setLastTestResult] = useState<{success: boolean, message: string} | null>(null)
+
+  const testConnection = async () => {
+    setTesting(true)
+    try {
+      const response = await fetch('/api/health')
+      const result = await response.json()
+      
+      if (result.database?.connected) {
+        setLastTestResult({success: true, message: '数据库连接正常'})
+        toast.success('数据库连接测试成功')
+      } else {
+        setLastTestResult({success: false, message: result.database?.error || '数据库连接失败'})
+        toast.error('数据库连接测试失败')
+      }
+    } catch (error) {
+      setLastTestResult({success: false, message: '连接测试失败'})
+      toast.error('连接测试失败')
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button 
+        type="button" 
+        variant="outline" 
+        size="sm"
+        onClick={testConnection}
+        disabled={testing}
+      >
+        {testing ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            测试中...
+          </>
+        ) : (
+          '测试数据库连接'
+        )}
+      </Button>
+      
+      {lastTestResult && (
+        <div className={`flex items-center text-sm ${lastTestResult.success ? 'text-green-600' : 'text-red-600'}`}>
+          {lastTestResult.success ? (
+            <CheckCircle className="mr-1 h-4 w-4" />
+          ) : (
+            <XCircle className="mr-1 h-4 w-4" />
+          )}
+          {lastTestResult.message}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function DatabaseConfig() {
   const { databaseUrl, directUrl, isConfigured, setDatabaseConfig, clearConfig } = useDatabaseStore()
@@ -124,10 +184,15 @@ export default function DatabaseConfig() {
 
         <div className="border-t pt-4">
           <h4 className="font-medium mb-2">当前状态</h4>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 space-y-1">
             <p>存储模式: {isConfigured ? '数据库' : '本地存储'}</p>
             {isConfigured && (
-              <p className="mt-1">数据库URL: {databaseUrl ? `${databaseUrl.substring(0, 20)}...` : '未设置'}</p>
+              <>
+                <p>数据库URL: {databaseUrl ? `${databaseUrl.substring(0, 20)}...` : '未设置'}</p>
+                <div className="mt-2">
+                  <TestDatabaseConnection />
+                </div>
+              </>
             )}
           </div>
         </div>

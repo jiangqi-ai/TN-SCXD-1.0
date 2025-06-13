@@ -28,9 +28,16 @@ export const isDatabaseAvailable = () => {
 
 export const getDatabaseConfig = () => {
   const { databaseUrl, directUrl } = useDatabaseStore.getState()
+  
+  // 动态设置环境变量，确保Prisma可以访问
+  if (databaseUrl && typeof process !== 'undefined' && process.env) {
+    process.env.DATABASE_URL = databaseUrl
+    process.env.DIRECT_URL = directUrl || databaseUrl
+  }
+  
   return {
     DATABASE_URL: databaseUrl,
-    DIRECT_URL: directUrl
+    DIRECT_URL: directUrl || databaseUrl
   }
 }
 
@@ -46,4 +53,10 @@ export const getStorageInfo = () => {
       ? '数据库已配置' 
       : '数据库未配置，请在管理员设置中配置数据库连接'
   }
+}
+
+// 初始化环境变量（在模块加载时执行）
+export const initializeEnvironment = () => {
+  const config = getDatabaseConfig()
+  return config
 } 

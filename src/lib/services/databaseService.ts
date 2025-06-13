@@ -1,7 +1,17 @@
 // 攀岩设备下单系统数据库服务层
 import { PrismaClient } from '@prisma/client'
+import { initializeEnvironment } from './vercelCompat'
 
-const prisma = new PrismaClient()
+// 初始化环境变量
+initializeEnvironment()
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 // ===== 用户管理服务 =====
 export const databaseUserService = {
