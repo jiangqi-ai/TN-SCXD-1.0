@@ -3,23 +3,25 @@
 /**
  * 检查错误是否来自浏览器扩展
  */
-export function isBrowserExtensionError(error: Error | ErrorEvent): boolean {
-  if ('filename' in error && error.filename) {
-    return error.filename.includes('content.js') || 
-           error.filename.includes('extension://') ||
-           error.filename.includes('chrome-extension://') ||
-           error.filename.includes('moz-extension://')
-  }
+export function isBrowserExtensionError(error: Error | ErrorEvent | string): boolean {
+  const errorStr = typeof error === 'string' ? error : 
+                   error instanceof Error ? error.message + (error.stack || '') :
+                   'filename' in error ? error.filename + error.message : String(error)
   
-  // ErrorEvent没有stack属性，只有Error才有
-  if (error instanceof Error && error.stack) {
-    return error.stack.includes('content.js') ||
-           error.stack.includes('extension://') ||
-           error.stack.includes('chrome-extension://') ||
-           error.stack.includes('moz-extension://')
-  }
+  // 检查常见的浏览器扩展错误模式
+  const extensionPatterns = [
+    'content.js',
+    'autoinsert.js',
+    'extension://',
+    'chrome-extension://',
+    'moz-extension://',
+    'rtvt openBall',
+    'isDragging has already been declared',
+    'Failed to execute \'getRangeAt\' on \'Selection\'',
+    'IndexSizeError'
+  ]
   
-  return false
+  return extensionPatterns.some(pattern => errorStr.includes(pattern))
 }
 
 /**
@@ -43,6 +45,29 @@ export function isSelectionAPIError(error: Error | ErrorEvent): boolean {
 }
 
 /**
+ * 检查是否是DOM Mutation Event弃用警告
+ */
+export function isDOMDeprecationWarning(error: Error | ErrorEvent | string): boolean {
+  const errorStr = typeof error === 'string' ? error : 
+                   error instanceof Error ? error.message :
+                   'message' in error ? error.message : String(error)
+  
+  return errorStr.includes('DOMSubtreeModified') ||
+         errorStr.includes('DOMNodeInserted') ||
+         errorStr.includes('DOMNodeRemoved') ||
+         errorStr.includes('deprecated')
+}
+
+/**
+ * 检查是否应该忽略的错误
+ */
+export function shouldIgnoreError(error: Error | ErrorEvent | string): boolean {
+  return isBrowserExtensionError(error) || 
+         isDOMDeprecationWarning(error) ||
+         (typeof error === 'string' && error.includes('rtvt'))
+}
+
+/**
  * 安全的Selection API调用
  */
 export function safeGetSelection(): Selection | null {
@@ -57,7 +82,10 @@ export function safeGetSelection(): Selection | null {
     
     return selection
   } catch (error) {
-    console.warn('Selection API error:', error)
+    // 不记录Selection API错误，因为这些通常来自扩展
+    if (!isBrowserExtensionError(error as Error)) {
+      console.warn('Selection API error:', error)
+    }
     return null
   }
 }
@@ -72,7 +100,9 @@ export function safeGetSelectedText(): string {
     
     return selection.toString()
   } catch (error) {
-    console.warn('Failed to get selected text:', error)
+    if (!isBrowserExtensionError(error as Error)) {
+      console.warn('Failed to get selected text:', error)
+    }
     return ''
   }
 } 

@@ -29,7 +29,8 @@
 		"db:deploy": "prisma migrate deploy",
 		"postinstall": "npm run db:generate:safe",
 		"performance:check": "node scripts/performance-check.js",
-		"size:analyze": "npx @next/bundle-analyzer"
+		"size:analyze": "npx @next/bundle-analyzer",
+		"setup:database": "node scripts/setup-database.mjs"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^5.0.1",
@@ -67,7 +68,7 @@
 		"react-hook-form": "^7.57.0",
 		"react-to-print": "^3.1.0",
 		"sonner": "^2.0.3",
-		"tailwind-merge": "^3.3.0",
+		"tailwind-merge": "^3.3.1",
 		"xlsx": "^0.18.5",
 		"zod": "^3.24.2",
 		"zustand": "^5.0.5"
