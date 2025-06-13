@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useDatabaseStore } from '@/store/useDatabaseStore'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react'
 
 // 数据库连接测试组件
 function TestDatabaseConnection() {
   const [testing, setTesting] = useState(false)
-  const [lastTestResult, setLastTestResult] = useState<{success: boolean, message: string} | null>(null)
+  const [lastTestResult, setLastTestResult] = useState<{success: boolean, message: string, mode?: string} | null>(null)
+  const { isConfigured } = useDatabaseStore()
 
   const testConnection = async () => {
     setTesting(true)
@@ -20,19 +21,43 @@ function TestDatabaseConnection() {
       const result = await response.json()
       
       if (result.database?.connected) {
-        setLastTestResult({success: true, message: '数据库连接正常'})
+        setLastTestResult({
+          success: true, 
+          message: '数据库连接正常',
+          mode: 'database'
+        })
         toast.success('数据库连接测试成功')
+      } else if (result.database?.configured === false) {
+        setLastTestResult({
+          success: true, 
+          message: '数据库未配置，使用本地存储模式',
+          mode: 'localStorage'
+        })
+        toast.info('系统使用本地存储模式')
       } else {
-        setLastTestResult({success: false, message: result.database?.error || '数据库连接失败'})
+        setLastTestResult({
+          success: false, 
+          message: result.database?.error || '数据库连接失败',
+          mode: 'error'
+        })
         toast.error('数据库连接测试失败')
       }
     } catch (error) {
-      setLastTestResult({success: false, message: '连接测试失败'})
+      setLastTestResult({
+        success: false, 
+        message: '连接测试失败',
+        mode: 'error'
+      })
       toast.error('连接测试失败')
     } finally {
       setTesting(false)
     }
   }
+
+  // 组件加载时自动检测一次
+  useEffect(() => {
+    testConnection()
+  }, [isConfigured])
 
   return (
     <div className="space-y-2">
@@ -46,21 +71,32 @@ function TestDatabaseConnection() {
         {testing ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            测试中...
+            检测中...
           </>
         ) : (
-          '测试数据库连接'
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            重新检测
+          </>
         )}
       </Button>
       
       {lastTestResult && (
-        <div className={`flex items-center text-sm ${lastTestResult.success ? 'text-green-600' : 'text-red-600'}`}>
-          {lastTestResult.success ? (
-            <CheckCircle className="mr-1 h-4 w-4" />
-          ) : (
-            <XCircle className="mr-1 h-4 w-4" />
+        <div className="space-y-1">
+          <div className={`flex items-center text-sm ${lastTestResult.success ? 'text-green-600' : 'text-red-600'}`}>
+            {lastTestResult.success ? (
+              <CheckCircle className="mr-1 h-4 w-4" />
+            ) : (
+              <XCircle className="mr-1 h-4 w-4" />
+            )}
+            {lastTestResult.message}
+          </div>
+          {lastTestResult.mode && (
+            <div className="text-xs text-gray-500">
+              当前模式: {lastTestResult.mode === 'database' ? '数据库' : 
+                         lastTestResult.mode === 'localStorage' ? '本地存储' : '错误'}
+            </div>
           )}
-          {lastTestResult.message}
         </div>
       )}
     </div>
@@ -97,15 +133,31 @@ export default function DatabaseConfig() {
     }
   }
 
-  const handleClearConfig = () => {
-    clearConfig()
-    setFormData({
-      databaseUrl: '',
-      directUrl: ''
-    })
-    toast.success('数据库配置已清除，将使用本地存储')
-    // 刷新页面以应用更改
-    window.location.reload()
+  const handleClearConfig = async () => {
+    try {
+      // 调用API清理配置
+      const response = await fetch('/api/config/clear', { method: 'POST' })
+      const result = await response.json()
+      
+      if (result.success) {
+        // 本地清理
+        clearConfig()
+        setFormData({
+          databaseUrl: '',
+          directUrl: ''
+        })
+        toast.success('数据库配置已清除，将使用本地存储')
+        
+        // 短暂延迟后刷新页面以应用更改
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      } else {
+        throw new Error(result.error || '清理配置失败')
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '清理配置失败')
+    }
   }
 
   const handleClearLocalStorage = () => {
@@ -183,17 +235,15 @@ export default function DatabaseConfig() {
         </form>
 
         <div className="border-t pt-4">
-          <h4 className="font-medium mb-2">当前状态</h4>
+          <h4 className="font-medium mb-2">连接状态检测</h4>
           <div className="text-sm text-gray-600 space-y-1">
             <p>存储模式: {isConfigured ? '数据库' : '本地存储'}</p>
             {isConfigured && (
-              <>
-                <p>数据库URL: {databaseUrl ? `${databaseUrl.substring(0, 20)}...` : '未设置'}</p>
-                <div className="mt-2">
-                  <TestDatabaseConnection />
-                </div>
-              </>
+              <p>数据库URL: {databaseUrl ? `${databaseUrl.substring(0, 20)}...` : '未设置'}</p>
             )}
+            <div className="mt-2">
+              <TestDatabaseConnection />
+            </div>
           </div>
         </div>
 
